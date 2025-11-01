@@ -1,0 +1,190 @@
+/* --- DISASTER MAP SECTION (FINAL + FIXED) --- */
+
+.disaster-map-section {
+    padding: 80px 0 60px; /* cinematic consistent spacing */
+    margin: 0 auto;
+    font-family: 'Lato', sans-serif;
+    color: var(--text-color);
+    background-color: var(--primary-bg);
+    position: relative;
+    z-index: 1;
+    opacity: 1 !important;      /* ensures visible without JS scroll logic */
+    transform: none !important;  /* removes any hidden translation */
+}
+
+/* Titles */
+.disaster-map-section h2 {
+    text-align: center;
+    font-size: 2.6rem;
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--heading-color);
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+}
+
+.disaster-map-section p {
+    text-align: center;
+    color: var(--brand-color);
+    margin-bottom: 40px;
+    font-size: 1.1rem;
+}
+
+/* --- CONTAINER LAYOUT --- */
+.map-and-data-container {
+    width: 90%;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* --- MAP WRAPPER --- */
+.map-wrapper {
+    flex: 2;
+    height: 600px;
+    position: relative;
+    border-radius: 14px;
+    background-color: var(--card-bg);
+    box-shadow: 0 10px 30px var(--shadow-color);
+    z-index: 10;
+    overflow: hidden;
+    border: 2px solid var(--secondary-bg);
+}
+
+/* --- LEAFLET MAP --- */
+#disaster-map-container {
+    height: 100% !important;
+    width: 100% !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transform: translate3d(0, 0, 0);
+}
+
+.leaflet-container {
+    z-index: 10000 !important;
+    border-radius: 10px;
+}
+
+/* --- DATA SIDEBAR --- */
+.data-sidebar {
+    width: 0;
+    max-height: 600px;
+    overflow: hidden;
+    opacity: 0;
+    transition: width 0.4s ease-in-out, opacity 0.4s ease-in-out, margin-left 0.3s ease-in-out;
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.data-sidebar.open {
+    width: 350px;
+    opacity: 1;
+    overflow-y: auto;
+    padding: 20px;
+    margin-left: 30px;
+    box-shadow: 0 10px 30px var(--shadow-color);
+}
+
+/* --- TOGGLE BUTTON --- */
+.toggle-data-btn {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 10002;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--button-bg);
+    color: var(--primary-bg);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.toggle-data-btn:hover {
+    background-color: var(--button-hover-bg);
+    transform: translateY(-1px);
+}
+
+.toggle-data-btn.active {
+    background-color: var(--button-hover-bg);
+}
+
+/* --- DATA TABLE --- */
+#data-table-container {
+    max-height: 500px;
+    background: var(--card-bg);
+    border-radius: 8px;
+}
+
+#data-table-container h3 {
+    padding: 15px;
+    font-weight: 700;
+    color: var(--heading-color);
+    background-color: var(--secondary-bg);
+    border-radius: 8px 8px 0 0;
+    margin: 0;
+}
+
+#data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+#data-table th, #data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--secondary-bg);
+    color: var(--text-color);
+}
+
+#data-table th {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+#data-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+#data-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+}
+
+/* Colored bullet */
+#data-table td span {
+    margin-right: 5px;
+    font-size: 1em;
+    vertical-align: middle;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 992px) {
+    .map-and-data-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .map-wrapper, 
+    .data-sidebar.open {
+        width: 100%;
+        height: 500px;
+    }
+
+    .data-sidebar.open {
+        margin-left: 0;
+        margin-top: 30px;
+    }
+}

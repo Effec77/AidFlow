@@ -1,0 +1,43 @@
+[
+    {
+      "name": "Houston Medical Center",
+      "type": "Medical Facility",
+      "capacity": "85%"
+    },
+    {
+      "name": "Regional Blood Bank",
+      "type": "Medical Storage",
+      "capacity": "30%"
+    },
+    {
+      "name": "Central Food Warehouse",
+      "type": "Food Storage",
+      "capacity": "67%"
+    },
+    {
+      "name": "Supply Depot A",
+      "type": "General Storage",
+      "capacity": "72%"
+    },
+    {
+      "name": "Supply Depot B",
+      "type": "General Storage",
+      "capacity": "58%"
+    },
+    {
+      "name": "Equipment Center",
+      "type": "Equipment Storage",
+      "capacity": "91%"
+    },
+    {
+      "name": "Water Treatment Facility",
+      "type": "Water Storage",
+      "capacity": "40%"
+    },
+    {
+      "name": "Communications Hub",
+      "type": "Equipment Storage",
+      "capacity": "15%"
+    }
+  ]
+  

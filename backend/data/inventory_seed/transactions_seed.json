@@ -1,0 +1,44 @@
+[
+    {
+      "type": "outbound",
+      "item": "Emergency Medical Kits (Level 1)",
+      "quantity": 25,
+      "destination": "Hurricane Response - Miami",
+      "status": "completed",
+      "timestamp": "2025-10-27T10:00:00Z"
+    },
+    {
+      "type": "inbound",
+      "item": "MRE (Meals Ready to Eat)",
+      "quantity": 500,
+      "source": "Emergency Foods LLC",
+      "status": "completed",
+      "timestamp": "2025-10-27T08:00:00Z"
+    },
+    {
+      "type": "outbound",
+      "item": "Emergency Blankets (Thermal)",
+      "quantity": 150,
+      "destination": "Flood Response - Houston",
+      "status": "in-transit",
+      "timestamp": "2025-10-27T06:00:00Z"
+    },
+    {
+      "type": "inbound",
+      "item": "Portable Generators (5KW)",
+      "quantity": 5,
+      "source": "Power Systems Pro",
+      "status": "pending",
+      "timestamp": "2025-10-27T04:00:00Z"
+    },
+    {
+      "type": "request",
+      "item": "Blood Supply (Type O)",
+      "quantity": 10,
+      "destination": "Field Hospital 3",
+      "priority": "critical",
+      "status": "pending",
+      "timestamp": "2025-10-27T02:00:00Z"
+    }
+  ]
+  

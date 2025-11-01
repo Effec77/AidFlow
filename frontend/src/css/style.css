@@ -1,0 +1,161 @@
+/* Font Imports */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Lato:wght@400;700&display=swap');
+
+/* --- Root Variables for Dark Theme (Default) --- */
+:root {
+  --primary-bg: #1A212E; /* Deep navy */
+  --secondary-bg: #2B3A4C; 
+  --text-color: #E6F0F3;
+  --heading-color: #F8B400;
+  --brand-color: #A4B2C2;
+  --accent-color: #F8B400;
+  --button-bg: #F8B400;
+  --button-hover-bg: #D49C00;
+  --card-bg: #212B3A;
+  --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+/* --- Light Theme Variables --- */
+body.light {
+  --primary-bg: #EAF0F6;
+  --secondary-bg: #DCE3EA;
+  --text-color: #3C424C;
+  --heading-color: #4A5C70;
+  --brand-color: #798FA5;
+  --accent-color: #D49C00;
+  --button-bg: #798FA5;
+  --button-hover-bg: #637A90;
+  --card-bg: #F8F9FB;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* --- Global Body Styles --- */
+body {
+  font-family: 'Lato', sans-serif;
+  color: var(--text-color);
+  margin: 0;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  transition: background 1s ease, color 0.5s ease;
+  min-height: 100vh;
+
+  /* ✨ Animated Gradient Background */
+  background: linear-gradient(135deg, #141E30, #243B55, #2B3A4C, #1A212E);
+  background-size: 300% 300%;
+  animation: gradientMove 12s ease-in-out infinite;
+}
+
+/* Gradient Animation Keyframes */
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Light mode gradient */
+body.light {
+  background: linear-gradient(135deg, #f0f4f9, #e5edf5, #dbe5ef, #f7f9fb);
+  background-size: 300% 300%;
+  animation: gradientMove 15s ease-in-out infinite;
+}
+
+/* --- Containers & Layout --- */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* --- Utility Classes & Animations --- */
+.hidden-section {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.visible-section {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Message Styling --- */
+.loading-message,
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+}
+
+/* --- Cinematic Section Transitions --- */
+.section-transition {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.section-transition::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(26, 26, 26, 0.9) 0%,
+    rgba(26, 26, 26, 0.4) 50%,
+    rgba(26, 26, 26, 0) 100%
+  );
+  opacity: 0.85;
+  animation: fadeShift 6s ease-in-out infinite alternate;
+}
+
+body.light .section-transition::before {
+  background: linear-gradient(
+    to bottom,
+    rgba(240, 240, 240, 1) 0%,
+    rgba(240, 240, 240, 0.7) 50%,
+    rgba(240, 240, 240, 0) 100%
+  );
+  opacity: 0.9;
+}
+
+/* Subtle motion for cinematic smoothness */
+@keyframes fadeShift {
+  0% {
+    opacity: 0.8;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+}

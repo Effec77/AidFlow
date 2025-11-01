@@ -1,0 +1,181 @@
+/* --- Login Section --- */
+.login-section {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 0;
+  background: linear-gradient(135deg, var(--primary-bg) 0%, var(--brand-color) 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+  transition: background-color 0.5s ease;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* --- Login Card --- */
+.login-card {
+  position: relative;
+  z-index: 10;
+  max-width: 420px;
+  width: 90%;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 3rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: fadeInUp 0.8s ease;
+  transition: all 0.4s ease;
+}
+
+@keyframes fadeInUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+body.light .login-card {
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Section Title --- */
+.section-title {
+  font-size: 2.3rem;
+  margin-bottom: 0.5rem;
+  color: var(--heading-color);
+  letter-spacing: 0.5px;
+  transition: color 0.4s ease;
+}
+
+/* --- Description --- */
+.login-card p {
+  color: var(--text-color);
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+/* --- Form Styles --- */
+.login-form {
+  width: 100%;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: 100%;
+}
+
+/* --- Input Fields --- */
+.form-field {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.25s ease;
+  box-sizing: border-box; /* ensures consistent sizing */
+}
+
+body.light .form-field {
+  background-color: rgba(255, 255, 255, 0.95);
+  color: var(--text-color);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.form-field::placeholder {
+  color: var(--text-color);
+  opacity: 0.65;
+}
+
+.form-field:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 8px rgba(255, 213, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+/* --- Button --- */
+.cta-button-secondary {
+  width: 100%;
+  padding: 0.9rem 2rem;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1rem;
+  background: var(--button-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.cta-button-secondary:hover {
+  background-color: var(--button-hover-bg);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(255, 213, 0, 0.3);
+}
+
+.cta-button-secondary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* --- Status Text --- */
+.text-critical {
+  color: #ff4d4d;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.text-primary {
+  color: var(--accent-color);
+  margin-top: 0.5rem;
+}
+
+/* --- Link Styling --- */
+.login-card a {
+  color: var(--brand-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.login-card a:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  .login-card {
+    padding: 2rem 1.5rem;
+    margin: 1rem;
+  }
+  .section-title {
+    font-size: 1.9rem;
+  }
+  .login-form {
+    gap: 1rem;
+  }
+  .form-field {
+    padding: 0.85rem 0.95rem;
+  }
+}

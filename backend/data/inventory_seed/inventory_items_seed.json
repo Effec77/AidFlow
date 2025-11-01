@@ -1,0 +1,99 @@
+[
+    {
+      "name": "Emergency Medical Kits (Level 1)",
+      "category": "Medical",
+      "currentStock": 156,
+      "minThreshold": 100,
+      "maxCapacity": 500,
+      "unit": "kits",
+      "location": "Houston Medical Center",
+      "status": "adequate",
+      "cost": 45.99,
+      "supplier": "MedSupply Corp"
+    },
+    {
+      "name": "Blood Supply (Type O)",
+      "category": "Medical",
+      "currentStock": 23,
+      "minThreshold": 50,
+      "maxCapacity": 200,
+      "unit": "units",
+      "location": "Regional Blood Bank",
+      "status": "critical",
+      "cost": 125.00,
+      "supplier": "Blood Services Inc"
+    },
+    {
+      "name": "MRE (Meals Ready to Eat)",
+      "category": "Food",
+      "currentStock": 3400,
+      "minThreshold": 2000,
+      "maxCapacity": 10000,
+      "unit": "meals",
+      "location": "Central Food Warehouse",
+      "status": "adequate",
+      "cost": 8.50,
+      "supplier": "Emergency Foods LLC"
+    },
+    {
+      "name": "Emergency Blankets (Thermal)",
+      "category": "Shelter",
+      "currentStock": 1200,
+      "minThreshold": 800,
+      "maxCapacity": 3000,
+      "unit": "blankets",
+      "location": "Supply Depot A",
+      "status": "adequate",
+      "cost": 12.99,
+      "supplier": "Shelter Solutions"
+    },
+    {
+      "name": "Portable Generators (5KW)",
+      "category": "Equipment",
+      "currentStock": 19,
+      "minThreshold": 25,
+      "maxCapacity": 100,
+      "unit": "units",
+      "location": "Equipment Center",
+      "status": "low",
+      "cost": 899.99,
+      "supplier": "Power Systems Pro"
+    },
+    {
+      "name": "Water Purification Tablets",
+      "category": "Water",
+      "currentStock": 5600,
+      "minThreshold": 3000,
+      "maxCapacity": 15000,
+      "unit": "tablets",
+      "location": "Water Treatment Facility",
+      "status": "adequate",
+      "cost": 0.25,
+      "supplier": "AquaPure Systems"
+    },
+    {
+      "name": "Communication Radios (Satellite)",
+      "category": "Equipment",
+      "currentStock": 8,
+      "minThreshold": 15,
+      "maxCapacity": 50,
+      "unit": "radios",
+      "location": "Communications Hub",
+      "status": "critical",
+      "cost": 245.00,
+      "supplier": "CommTech Solutions"
+    },
+    {
+      "name": "Emergency Tents (Family Size)",
+      "category": "Shelter",
+      "currentStock": 67,
+      "minThreshold": 40,
+      "maxCapacity": 200,
+      "unit": "tents",
+      "location": "Supply Depot B",
+      "status": "adequate",
+      "cost": 89.99,
+      "supplier": "Shelter Solutions"
+    }
+  ]
+  
