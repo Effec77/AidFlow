@@ -1,0 +1,309 @@
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, MapPin, Clock, Users, TrendingUp, Activity } from 'lucide-react';
+import axios from 'axios';
+
+const EmergencyDashboard = () => {
+    const [activeEmergencies, setActiveEmergencies] = useState([]);
+    const [analytics, setAnalytics] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [selectedEmergency, setSelectedEmergency] = useState(null);
+
+    useEffect(() => {
+        fetchActiveEmergencies();
+        fetchAnalytics();
+        
+        // Refresh every 30 seconds
+        const interval = setInterval(() => {
+            fetchActiveEmergencies();
+            fetchAnalytics();
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const fetchActiveEmergencies = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/emergency/active');
+            setActiveEmergencies(response.data.emergencies);
+        } catch (error) {
+            console.error('Failed to fetch active emergencies:', error);
+        }
+    };
+
+    const fetchAnalytics = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/emergency/analytics');
+            setAnalytics(response.data);
+            setLoading(false);
+        } catch (error) {
+            console.error('Failed to fetch analytics:', error);
+            setLoading(false);
+        }
+    };
+
+    const updateEmergencyStatus = async (emergencyId, newStatus, notes = '') => {
+        try {
+            await axios.put(`http://localhost:5000/api/emergency/update/${emergencyId}`, {
+                status: newStatus,
+                notes: notes,
+                updatedBy: 'admin' // In real app, use actual admin ID
+            });
+            
+            fetchActiveEmergencies(); // Refresh the list
+            alert('Emergency status updated successfully');
+        } catch (error) {
+            console.error('Failed to update emergency status:', error);
+            alert('Failed to update emergency status');
+        }
+    };
+
+    const getSeverityColor = (severity) => {
+        switch (severity) {
+            case 'critical': return '#dc2626';
+            case 'high': return '#ea580c';
+            case 'medium': return '#d97706';
+            case 'low': return '#65a30d';
+            default: return '#6b7280';
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'received': return '#3b82f6';
+            case 'dispatched': return '#f59e0b';
+            case 'en_route': return '#10b981';
+            case 'completed': return '#059669';
+            default: return '#6b7280';
+        }
+    };
+
+    if (loading) {
+        return <div className="loading">Loading emergency dashboard...</div>;
+    }
+
+    return (
+        <div className="emergency-dashboard">
+            <div className="dashboard-header">
+                <h1>🚨 Emergency Response Dashboard</h1>
+                <p>AI-powered emergency management system</p>
+            </div>
+
+            {/* Analytics Cards */}
+            {analytics && (
+                <div className="analytics-grid">
+                    <div className="analytics-card">
+                        <Activity className="card-icon" />
+                        <div className="card-content">
+                            <h3>Active Emergencies</h3>
+                            <p className="card-number">{activeEmergencies.length}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="analytics-card">
+                        <TrendingUp className="card-icon" />
+                        <div className="card-content">
+                            <h3>Last 24 Hours</h3>
+                            <p className="card-number">{analytics.last24Hours}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="analytics-card">
+                        <AlertTriangle className="card-icon" />
+                        <div className="card-content">
+                            <h3>Critical Cases</h3>
+                            <p className="card-number">
+                                {activeEmergencies.filter(e => e.aiAnalysis.severity === 'critical').length}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div className="analytics-card">
+                        <Users className="card-icon" />
+                        <div className="card-content">
+                            <h3>Teams Deployed</h3>
+                            <p className="card-number">
+                                {activeEmergencies.filter(e => e.assignedTeam).length}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Active Emergencies List */}
+            <div className="emergencies-section">
+                <h2>Active Emergency Requests</h2>
+                
+                {activeEmergencies.length === 0 ? (
+                    <div className="no-emergencies">
+                        <p>No active emergencies at the moment.</p>
+                    </div>
+                ) : (
+                    <div className="emergencies-grid">
+                        {activeEmergencies.map((emergency) => (
+                            <div 
+                                key={emergency.emergencyId} 
+                                className="emergency-card"
+                                onClick={() => setSelectedEmergency(emergency)}
+                            >
+                                <div className="emergency-header">
+                                    <div className="emergency-id">
+                                        {emergency.emergencyId}
+                                    </div>
+                                    <div 
+                                        className="severity-badge"
+                                        style={{ backgroundColor: getSeverityColor(emergency.aiAnalysis.severity) }}
+                                    >
+                                        {emergency.aiAnalysis.severity}
+                                    </div>
+                                </div>
+
+                                <div className="emergency-info">
+                                    <div className="location-info">
+                                        <MapPin className="info-icon" />
+                                        <span>{emergency.location.address || `${emergency.location.lat.toFixed(4)}, ${emergency.location.lon.toFixed(4)}`}</span>
+                                    </div>
+                                    
+                                    <div className="time-info">
+                                        <Clock className="info-icon" />
+                                        <span>{new Date(emergency.createdAt).toLocaleString()}</span>
+                                    </div>
+                                    
+                                    <div className="disaster-info">
+                                        <AlertTriangle className="info-icon" />
+                                        <span>{emergency.aiAnalysis.disaster.type} ({Math.round(emergency.aiAnalysis.disaster.confidence * 100)}% confidence)</span>
+                                    </div>
+                                </div>
+
+                                <div className="emergency-message">
+                                    <p>"{emergency.userMessage}"</p>
+                                </div>
+
+                                <div className="emergency-actions">
+                                    <div 
+                                        className="status-badge"
+                                        style={{ backgroundColor: getStatusColor(emergency.status) }}
+                                    >
+                                        {emergency.status}
+                                    </div>
+                                    
+                                    <div className="action-buttons">
+                                        {emergency.status === 'received' && (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    updateEmergencyStatus(emergency.emergencyId, 'dispatched');
+                                                }}
+                                                className="dispatch-btn"
+                                            >
+                                                Dispatch
+                                            </button>
+                                        )}
+                                        
+                                        {emergency.status === 'dispatched' && (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    updateEmergencyStatus(emergency.emergencyId, 'en_route');
+                                                }}
+                                                className="enroute-btn"
+                                            >
+                                                En Route
+                                            </button>
+                                        )}
+                                        
+                                        {emergency.status === 'en_route' && (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    updateEmergencyStatus(emergency.emergencyId, 'completed');
+                                                }}
+                                                className="complete-btn"
+                                            >
+                                                Complete
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Emergency Detail Modal */}
+            {selectedEmergency && (
+                <div className="emergency-modal" onClick={() => setSelectedEmergency(null)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Emergency Details: {selectedEmergency.emergencyId}</h2>
+                            <button 
+                                className="close-btn"
+                                onClick={() => setSelectedEmergency(null)}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="detail-section">
+                                <h3>User Information</h3>
+                                <p><strong>User ID:</strong> {selectedEmergency.userId}</p>
+                                <p><strong>Location:</strong> {selectedEmergency.location.address}</p>
+                                <p><strong>Coordinates:</strong> {selectedEmergency.location.lat}, {selectedEmergency.location.lon}</p>
+                            </div>
+
+                            <div className="detail-section">
+                                <h3>AI Analysis</h3>
+                                <p><strong>Disaster Type:</strong> {selectedEmergency.aiAnalysis.disaster.type}</p>
+                                <p><strong>Confidence:</strong> {Math.round(selectedEmergency.aiAnalysis.disaster.confidence * 100)}%</p>
+                                <p><strong>Severity:</strong> {selectedEmergency.aiAnalysis.severity}</p>
+                                <p><strong>Urgency:</strong> {selectedEmergency.aiAnalysis.sentiment.urgency}</p>
+                            </div>
+
+                            <div className="detail-section">
+                                <h3>Resources Allocated</h3>
+                                <div className="resources-detail">
+                                    <div>
+                                        <strong>Immediate:</strong>
+                                        <ul>
+                                            {selectedEmergency.response.resources.immediate.map((resource, index) => (
+                                                <li key={index}>{resource.replace(/_/g, ' ')}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <strong>Secondary:</strong>
+                                        <ul>
+                                            {selectedEmergency.response.resources.secondary.map((resource, index) => (
+                                                <li key={index}>{resource.replace(/_/g, ' ')}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="detail-section">
+                                <h3>Timeline</h3>
+                                <div className="timeline">
+                                    {selectedEmergency.timeline.map((event, index) => (
+                                        <div key={index} className="timeline-event">
+                                            <div className="timeline-time">
+                                                {new Date(event.timestamp).toLocaleString()}
+                                            </div>
+                                            <div className="timeline-content">
+                                                <strong>{event.status}</strong>
+                                                {event.notes && <p>{event.notes}</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default EmergencyDashboard;

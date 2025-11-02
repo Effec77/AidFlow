@@ -16,6 +16,7 @@ import Disaster from "./models/Disaster.js";
 import { InventoryItem, Location, Transaction } from './models/Inventory.js';
 import connectDB from "./db.js";
 import generateToken from './utils/tokenGenerator.js';
+import emergencyRoutes from './routes/emergency.js';
 // -----------------------------
 
 dotenv.config();
@@ -289,6 +290,11 @@ app.put("/api/admin/donation/:id", async (req, res) => {
     }
   });
     
+
+// **********************************************
+// ********* EMERGENCY AI AGENT ROUTES **********
+// **********************************************
+app.use('/api/emergency', emergencyRoutes);
 
 // **********************************************
 // ********* DISASTER PREDICTIONS API ***********
