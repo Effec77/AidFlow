@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { UserProvider } from './components/UserContext'; 
+import { UserProvider } from './components/UserContext';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
 import About from './components/About.jsx';
 import Services from './components/Services.jsx';
-import DisasterMapSection from './components/DisasterMapSection.jsx'; 
+import DisasterMapSection from './components/DisasterMapSection.jsx';
 import Team from './components/Team.jsx';
 import Contact from './components/Contact.jsx';
 import Footer from './components/Footer.jsx';
 import Register from './components/Register.jsx';
 import Login from './components/Login.jsx';
 import InventoryPage from './components/InventoryPage.jsx';
+import ReliefAnalytics from './components/ReliefAnalytics.jsx';
+
 
 // Import CSS
 import './css/style.css';
@@ -26,6 +28,7 @@ import './css/Register.css';
 import './css/Login.css';
 import './css/DisasterMap.css';
 import './css/InventoryPage.css';
+import './css/ReliefAnalytics.css';
 
 /* 🏠 Home Page Component */
 const Home = ({ predictionData, loading, error }) => {
@@ -109,7 +112,16 @@ function AppContent() {
         />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/inventory" element={<InventoryPage />} />
+        <Route
+          path="/inventory"
+          element={
+            <>
+              <InventoryPage />
+              <ReliefAnalytics />
+            </>
+          }
+        />
+
       </Routes>
       <Footer />
     </div>

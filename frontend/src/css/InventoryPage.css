@@ -1,5 +1,13 @@
+/* =========================================================
+   🌐 GENERAL STYLES (Shared Across Light & Dark Modes)
+   ========================================================= */
+
+/* =========================================================
+   🎨 GENERAL STYLES
+   ========================================================= */
 .inventory-page {
-  padding: 40px 80px;
+  padding: 100px 80px 40px;
+  /* Added top padding for fixed header */
   background-color: var(--secondary-bg, #f9fafb);
   color: var(--text-color, #111);
 }
@@ -19,19 +27,39 @@
   font-weight: 500;
 }
 
-.status.loading { background: #e7f0ff; color: #004aad; }
-.status.error { background: #ffeaea; color: #b91c1c; }
-.status.success { background: #ecfdf5; color: #065f46; }
+.status.loading {
+  background: #e7f0ff;
+  color: #004aad;
+}
 
-.spin { animation: spin 1.2s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.status.error {
+  background: #ffeaea;
+  color: #b91c1c;
+}
 
+.status.success {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.spin {
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------------- Form Section ---------------- */
 .inventory-form-section {
   background: var(--primary-bg, #fff);
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   margin-bottom: 40px;
+  transition: all 0.3s ease;
 }
 
 .inventory-form .form-grid {
@@ -48,6 +76,7 @@
 .form-group label {
   font-weight: 600;
   margin-bottom: 6px;
+  color: var(--label-color, #222);
 }
 
 .form-group input,
@@ -55,10 +84,19 @@
   padding: 10px 12px;
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: #fff;
-  color: #111;
+  background: var(--input-bg, #fff);
+  color: var(--input-text, #111);
+  transition: all 0.2s ease;
 }
 
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  outline: none;
+}
+
+/* ---------------- Buttons ---------------- */
 .form-buttons {
   margin-top: 20px;
   display: flex;
@@ -79,7 +117,9 @@
   color: white;
 }
 
-.btn.primary:hover { background-color: #1d4ed8; }
+.btn.primary:hover {
+  background-color: #1d4ed8;
+}
 
 .btn.secondary {
   background-color: #f3f4f6;
@@ -90,11 +130,12 @@
   background-color: #e5e7eb;
 }
 
+/* ---------------- Table Section ---------------- */
 .inventory-table-section {
   background: #fff;
   padding: 25px;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .inventory-table {
@@ -133,14 +174,14 @@
   color: #1d4ed8;
 }
 
-/* Transaction Modal */
+/* ---------------- Modal ---------------- */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -151,7 +192,7 @@
   padding: 25px;
   border-radius: 10px;
   width: 380px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 .transaction-form {
@@ -171,4 +212,220 @@
   text-align: center;
   padding: 20px;
   color: #555;
+}
+
+/* =========================================================
+     ☀️ LIGHT MODE STYLES
+     ========================================================= */
+body.light .inventory-page {
+  background-color: #f9fafb;
+  color: #111;
+}
+
+body.light .inventory-form-section,
+body.light .inventory-table-section,
+body.light .transaction-modal {
+  background-color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+body.light .form-group label {
+  color: #333;
+}
+
+body.light .form-group input,
+body.light .form-group select {
+  background: #fff;
+  color: #111;
+  border: 1px solid #ccc;
+}
+
+body.light .btn.primary {
+  background-color: #2563eb;
+  color: #fff;
+}
+
+body.light .btn.primary:hover {
+  background-color: #1d4ed8;
+}
+
+body.light .btn.secondary {
+  background-color: #f3f4f6;
+  color: #111;
+}
+
+body.light .btn.secondary:hover {
+  background-color: #e5e7eb;
+}
+
+body.light .icon-btn {
+  color: #2563eb;
+}
+
+body.light .icon-btn:hover {
+  color: #1d4ed8;
+}
+
+body.light .status.loading {
+  background: #e7f0ff;
+  color: #004aad;
+}
+
+body.light .status.error {
+  background: #ffeaea;
+  color: #b91c1c;
+}
+
+body.light .status.success {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+body.light .form-group select {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #1e293b;
+  /* Dark readable text */
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #2563eb 50%),
+    linear-gradient(135deg, #2563eb 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(50% - 2px),
+    calc(100% - 15px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+  transition: all 0.3s ease-in-out;
+}
+
+body.light .form-group select option {
+  background-color: #f9fafb;
+  /* Light dropdown background */
+  color: #1e293b;
+}
+
+body.light .form-group select:hover,
+body.light .form-group select:focus {
+  border-color: #2563eb;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  outline: none;
+}
+
+/* =========================================================
+     🌙 DARK MODE STYLES
+     ========================================================= */
+body.dark .inventory-page {
+  background: linear-gradient(180deg, #0e1116 0%, #111827 100%);
+  color: #f5f5f5;
+}
+
+body.dark .inventory-form-section,
+body.dark .inventory-table-section,
+body.dark .transaction-modal {
+  background: rgba(25, 25, 35, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+body.dark .form-group label {
+  color: #e5e7eb;
+}
+
+body.dark .form-group input,
+body.dark .form-group select {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f9fafb;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+body.dark .form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.dark .btn.primary {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+}
+
+body.dark .btn.primary:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+}
+
+body.dark .btn.secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f9fafb;
+}
+
+body.dark .btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+body.dark .icon-btn {
+  color: #60a5fa;
+}
+
+body.dark .icon-btn:hover {
+  color: #3b82f6;
+}
+
+body.dark .inventory-table th,
+body.dark .inventory-table td {
+  color: #f5f5f5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark .status.loading {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+body.dark .status.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+body.dark .status.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+/* 🩶 FIX: Dropdown visibility in dark mode */
+body.dark .form-group select {
+  background-color: rgba(255, 255, 255, 0.1);
+  /* Subtle glass effect */
+  color: #f9fafb;
+  /* Readable text */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #93c5fd 50%),
+    linear-gradient(135deg, #93c5fd 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(50% - 2px),
+    calc(100% - 15px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+  transition: all 0.3s ease-in-out;
+}
+
+body.dark .form-group select option {
+  background-color: #1f2937;
+  /* Dropdown list background */
+  color: #f9fafb;
+  /* Option text */
+}
+
+body.dark .form-group select:hover,
+body.dark .form-group select:focus {
+  border-color: #3b82f6;
+  /* Blue highlight */
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  outline: none;
 }
