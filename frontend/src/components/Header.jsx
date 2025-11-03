@@ -55,6 +55,7 @@ const Header = () => {
           <ul className="nav-list">
             <li><button onClick={() => handleScroll('about')} className="nav-link">About</button></li>
             <li><button onClick={() => handleScroll('services')} className="nav-link">Services</button></li>
+            <li><Link to="/emergency" className="nav-link emergency-link">🚨 Emergency</Link></li>
             <li><button onClick={() => handleScroll('team')} className="nav-link">Team</button></li>
             <li><button onClick={() => handleScroll('contact')} className="nav-link">Contact</button></li>
           </ul>
@@ -68,6 +69,7 @@ const Header = () => {
               <div className="dropdown-menu">
                 <Link to="/login" className="dropdown-item">Login</Link>
                 <Link to="/register" className="dropdown-item">Register</Link>
+                <Link to="/emergency-dashboard" className="dropdown-item">Emergency Dashboard</Link>
               </div>
             </li>
             <li>
