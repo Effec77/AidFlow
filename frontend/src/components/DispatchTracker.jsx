@@ -1,0 +1,374 @@
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle } from 'react-leaflet';
+import axios from 'axios';
+import { Truck, MapPin, Clock, Package, Navigation, Activity, AlertCircle } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
+import '../css/DispatchTracker.css';
+
+/**
+ * Real-Time Dispatch Tracking Dashboard
+ * Shows all active dispatches on a map with live updates
+ */
+const DispatchTracker = () => {
+    const [activeDispatches, setActiveDispatches] = useState([]);
+    const [selectedDispatch, setSelectedDispatch] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [mapCenter, setMapCenter] = useState([30.7171, 76.8537]); // Default: Chandigarh
+
+    useEffect(() => {
+        fetchActiveDispatches();
+        
+        // Refresh every 10 seconds for real-time updates
+        const interval = setInterval(fetchActiveDispatches, 10000);
+        
+        return () => clearInterval(interval);
+    }, []);
+
+    const fetchActiveDispatches = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/emergency/active-dispatches');
+            setActiveDispatches(response.data.dispatches || []);
+            setLoading(false);
+        } catch (error) {
+            console.error('Failed to fetch dispatches:', error);
+            setLoading(false);
+        }
+    };
+
+    const getStatusColor = (status) => {
+        const colors = {
+            'dispatched': '#F59E0B',
+            'en_route': '#3B82F6',
+            'delivered': '#10B981',
+            'completed': '#059669'
+        };
+        return colors[status] || '#6B7280';
+    };
+
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'dispatched': return <Package className="status-icon" />;
+            case 'en_route': return <Truck className="status-icon" />;
+            case 'delivered': return <MapPin className="status-icon" />;
+            case 'completed': return <Activity className="status-icon" />;
+            default: return <AlertCircle className="status-icon" />;
+        }
+    };
+
+    const calculateProgress = (dispatch) => {
+        if (!dispatch.dispatchDetails) return 0;
+        
+        const dispatchedTime = new Date(dispatch.dispatchDetails.dispatchedAt).getTime();
+        const estimatedArrival = new Date(dispatch.dispatchDetails.estimatedArrival).getTime();
+        const now = Date.now();
+        
+        const totalTime = estimatedArrival - dispatchedTime;
+        const elapsed = now - dispatchedTime;
+        
+        const progress = Math.min(Math.max((elapsed / totalTime) * 100, 0), 100);
+        return Math.round(progress);
+    };
+
+    const getTimeRemaining = (dispatch) => {
+        if (!dispatch.dispatchDetails) return 'N/A';
+        
+        const estimatedArrival = new Date(dispatch.dispatchDetails.estimatedArrival).getTime();
+        const now = Date.now();
+        const remaining = estimatedArrival - now;
+        
+        if (remaining <= 0) return 'Arrived';
+        
+        const minutes = Math.floor(remaining / 60000);
+        if (minutes < 60) return `${minutes} min`;
+        
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours}h ${mins}m`;
+    };
+
+    if (loading) {
+        return (
+            <div className="dispatch-tracker loading">
+                <div className="spinner-large" />
+                <p>Loading dispatch tracking...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="dispatch-tracker">
+            <div className="tracker-header">
+                <div className="header-content">
+                    <Navigation className="header-icon" />
+                    <div>
+                        <h2>Live Dispatch Tracking</h2>
+                        <p>Real-time monitoring of all active emergency dispatches</p>
+                    </div>
+                </div>
+                <div className="stats-bar">
+                    <div className="stat">
+                        <span className="stat-value">{activeDispatches.length}</span>
+                        <span className="stat-label">Active Dispatches</span>
+                    </div>
+                    <div className="stat">
+                        <span className="stat-value">
+                            {activeDispatches.filter(d => d.status === 'en_route').length}
+                        </span>
+                        <span className="stat-label">En Route</span>
+                    </div>
+                    <div className="stat">
+                        <span className="stat-value">
+                            {activeDispatches.filter(d => d.status === 'dispatched').length}
+                        </span>
+                        <span className="stat-label">Just Dispatched</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="tracker-content">
+                {/* Dispatch List Sidebar */}
+                <div className="dispatch-list">
+                    <h3>Active Dispatches</h3>
+                    
+                    {activeDispatches.length === 0 ? (
+                        <div className="no-dispatches">
+                            <Package className="empty-icon" />
+                            <p>No active dispatches</p>
+                        </div>
+                    ) : (
+                        activeDispatches.map((dispatch) => (
+                            <div
+                                key={dispatch.emergencyId}
+                                className={`dispatch-card ${selectedDispatch?.emergencyId === dispatch.emergencyId ? 'selected' : ''}`}
+                                onClick={() => {
+                                    setSelectedDispatch(dispatch);
+                                    setMapCenter([dispatch.location.lat, dispatch.location.lon]);
+                                }}
+                            >
+                                <div className="dispatch-card-header">
+                                    <div className="dispatch-id">
+                                        {dispatch.emergencyId}
+                                    </div>
+                                    <div 
+                                        className="status-badge"
+                                        style={{ backgroundColor: getStatusColor(dispatch.status) }}
+                                    >
+                                        {getStatusIcon(dispatch.status)}
+                                        {dispatch.status}
+                                    </div>
+                                </div>
+
+                                <div className="dispatch-info">
+                                    <div className="info-item">
+                                        <MapPin className="info-icon" />
+                                        <span>
+                                            {dispatch.location.address || 
+                                             `${dispatch.location.lat.toFixed(4)}, ${dispatch.location.lon.toFixed(4)}`}
+                                        </span>
+                                    </div>
+
+                                    <div className="info-item">
+                                        <Clock className="info-icon" />
+                                        <span>ETA: {getTimeRemaining(dispatch)}</span>
+                                    </div>
+
+                                    {dispatch.dispatchDetails && (
+                                        <div className="info-item">
+                                            <Package className="info-icon" />
+                                            <span>
+                                                {dispatch.dispatchDetails.centers?.length || 0} centers dispatched
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Progress Bar */}
+                                <div className="progress-container">
+                                    <div 
+                                        className="progress-bar"
+                                        style={{ 
+                                            width: `${calculateProgress(dispatch)}%`,
+                                            backgroundColor: getStatusColor(dispatch.status)
+                                        }}
+                                    />
+                                </div>
+                                <div className="progress-label">
+                                    {calculateProgress(dispatch)}% Complete
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Map View */}
+                <div className="map-view">
+                    <MapContainer
+                        center={mapCenter}
+                        zoom={12}
+                        style={{ height: '100%', width: '100%' }}
+                    >
+                        <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        />
+
+                        {/* Plot all active dispatches */}
+                        {activeDispatches.map((dispatch) => (
+                            <React.Fragment key={dispatch.emergencyId}>
+                                {/* Emergency Location Marker */}
+                                <Marker position={[dispatch.location.lat, dispatch.location.lon]}>
+                                    <Popup>
+                                        <div className="map-popup">
+                                            <strong>{dispatch.emergencyId}</strong>
+                                            <p>Status: {dispatch.status}</p>
+                                            <p>Type: {dispatch.aiAnalysis?.disaster?.type}</p>
+                                            <p>Severity: {dispatch.aiAnalysis?.severity}</p>
+                                        </div>
+                                    </Popup>
+                                </Marker>
+
+                                {/* Emergency Zone Circle */}
+                                <Circle
+                                    center={[dispatch.location.lat, dispatch.location.lon]}
+                                    radius={500}
+                                    pathOptions={{
+                                        color: getStatusColor(dispatch.status),
+                                        fillColor: getStatusColor(dispatch.status),
+                                        fillOpacity: 0.2
+                                    }}
+                                />
+
+                                {/* Routes from each dispatch center */}
+                                {dispatch.dispatchDetails?.centers?.map((center, idx) => (
+                                    <React.Fragment key={`${dispatch.emergencyId}-${idx}`}>
+                                        {/* Center Marker */}
+                                        {center.route?.waypoints && center.route.waypoints.length > 0 && (
+                                            <>
+                                                <Marker 
+                                                    position={[
+                                                        center.route.waypoints[0].lat,
+                                                        center.route.waypoints[0].lon
+                                                    ]}
+                                                >
+                                                    <Popup>
+                                                        <div className="map-popup">
+                                                            <strong>{center.centerName}</strong>
+                                                            <p>Distance: {center.route.distance?.toFixed(2)} km</p>
+                                                            <p>Duration: {Math.round(center.route.duration)} min</p>
+                                                            <p>Resources: {center.resources?.length || 0} items</p>
+                                                        </div>
+                                                    </Popup>
+                                                </Marker>
+
+                                                {/* Route Polyline */}
+                                                <Polyline
+                                                    positions={center.route.waypoints.map(wp => [wp.lat, wp.lon])}
+                                                    pathOptions={{
+                                                        color: getStatusColor(dispatch.status),
+                                                        weight: 3,
+                                                        opacity: 0.7,
+                                                        dashArray: dispatch.status === 'dispatched' ? '10, 10' : null
+                                                    }}
+                                                />
+                                            </>
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </React.Fragment>
+                        ))}
+                    </MapContainer>
+
+                    {/* Map Legend */}
+                    <div className="map-legend">
+                        <h4>Legend</h4>
+                        <div className="legend-item">
+                            <div className="legend-marker" style={{ backgroundColor: '#F59E0B' }} />
+                            <span>Dispatched</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-marker" style={{ backgroundColor: '#3B82F6' }} />
+                            <span>En Route</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-marker" style={{ backgroundColor: '#10B981' }} />
+                            <span>Delivered</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Detailed View Panel */}
+                {selectedDispatch && (
+                    <div className="detail-panel">
+                        <div className="panel-header">
+                            <h3>Dispatch Details</h3>
+                            <button 
+                                className="close-panel"
+                                onClick={() => setSelectedDispatch(null)}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="panel-content">
+                            <div className="detail-section">
+                                <h4>Emergency Information</h4>
+                                <p><strong>ID:</strong> {selectedDispatch.emergencyId}</p>
+                                <p><strong>Type:</strong> {selectedDispatch.aiAnalysis?.disaster?.type}</p>
+                                <p><strong>Severity:</strong> {selectedDispatch.aiAnalysis?.severity}</p>
+                                <p><strong>Message:</strong> "{selectedDispatch.userMessage}"</p>
+                            </div>
+
+                            {selectedDispatch.dispatchDetails && (
+                                <>
+                                    <div className="detail-section">
+                                        <h4>Dispatch Status</h4>
+                                        <p><strong>Dispatched:</strong> {new Date(selectedDispatch.dispatchDetails.dispatchedAt).toLocaleString()}</p>
+                                        <p><strong>ETA:</strong> {new Date(selectedDispatch.dispatchDetails.estimatedArrival).toLocaleTimeString()}</p>
+                                        <p><strong>Time Remaining:</strong> {getTimeRemaining(selectedDispatch)}</p>
+                                        <p><strong>Progress:</strong> {calculateProgress(selectedDispatch)}%</p>
+                                    </div>
+
+                                    <div className="detail-section">
+                                        <h4>Response Centers ({selectedDispatch.dispatchDetails.centers?.length || 0})</h4>
+                                        {selectedDispatch.dispatchDetails.centers?.map((center, idx) => (
+                                            <div key={idx} className="center-detail">
+                                                <strong>{center.centerName}</strong>
+                                                <p>Distance: {center.route?.distance?.toFixed(2)} km</p>
+                                                <p>Duration: {Math.round(center.route?.duration)} min</p>
+                                                <div className="resources-mini">
+                                                    <strong>Resources:</strong>
+                                                    <ul>
+                                                        {center.resources?.map((resource, ridx) => (
+                                                            <li key={ridx}>
+                                                                {resource.quantity} {resource.unit} - {resource.name}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
+                            <div className="detail-section">
+                                <h4>Timeline</h4>
+                                {selectedDispatch.timeline?.map((event, idx) => (
+                                    <div key={idx} className="timeline-item">
+                                        <div className="timeline-time">
+                                            {new Date(event.timestamp).toLocaleString()}
+                                        </div>
+                                        <div className="timeline-status">{event.status}</div>
+                                        {event.notes && <div className="timeline-notes">{event.notes}</div>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default DispatchTracker;
