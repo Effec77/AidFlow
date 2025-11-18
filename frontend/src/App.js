@@ -28,6 +28,7 @@ import EmergencyDashboard from "./components/EmergencyDashboard.jsx"; // Emergen
 import InventoryIntegration from "./components/InventoryIntegration.jsx"; // Inventory Integration
 import RoutingVisualization from "./components/RoutingVisualization.jsx"; // Routing Visualization
 import DispatchTracker from "./components/DispatchTracker.jsx"; // Dispatch Tracker
+import LiveDisasters from "./components/LiveDisasters.jsx"; // Live Disasters
 
 // 🎨 CSS Imports
 import "./css/style.css";
@@ -47,6 +48,7 @@ import "./css/Emergency.css";
 import "./css/InventoryIntegration.css";
 import "./css/RoutingVisualization.css";
 import "./css/DispatchTracker.css";
+import "./css/LiveDisasters.css";
 
 /* 🏠 Home Page Component */
 const Home = ({ predictionData, loading, error }) => {
@@ -149,6 +151,7 @@ function AppContent() {
         <Route path="/emergency" element={<EmergencyRequest userId="demo_user_123" />} />
         <Route path="/emergency-dashboard" element={<EmergencyDashboard />} />
         <Route path="/dispatch-tracker" element={<DispatchTracker />} />
+        <Route path="/live-disasters" element={<LiveDisasters />} />
         
         {/* Inventory Integration */}
         <Route path="/inventory-live" element={<InventoryIntegration />} />

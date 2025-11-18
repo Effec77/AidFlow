@@ -1,6 +1,7 @@
 /* Routing Visualization Styles */
 .routing-visualization {
     padding: 2rem;
+    padding-top: 120px; /* Space for fixed header */
     max-width: 1400px;
     margin: 0 auto;
     animation: fadeInUp 0.6s ease-out;
@@ -203,10 +204,16 @@
     border-radius: 14px;
     box-shadow: 0 4px 16px var(--shadow-color);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    animation: fadeInUp 0.6s ease-out backwards;
 }
+
+.info-card:nth-child(1) { animation-delay: 0.1s; }
+.info-card:nth-child(2) { animation-delay: 0.2s; }
+.info-card:nth-child(3) { animation-delay: 0.3s; }
+.info-card:nth-child(4) { animation-delay: 0.4s; }
 
 .info-card::before {
     content: '';
@@ -215,18 +222,35 @@
     left: 0;
     width: 4px;
     height: 100%;
-    background: var(--accent-color);
+    background: linear-gradient(180deg, #667eea, #764ba2);
     transform: scaleY(0);
     transition: transform 0.3s ease;
 }
 
+.info-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
 .info-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px var(--shadow-color);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
 }
 
 .info-card:hover::before {
     transform: scaleY(1);
+}
+
+.info-card:hover::after {
+    opacity: 1;
+    animation: rotate 3s linear infinite;
 }
 
 .info-card.warning {

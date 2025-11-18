@@ -44,19 +44,37 @@ const EmergencyDashboard = () => {
         }
     };
 
-    const updateEmergencyStatus = async (emergencyId, newStatus, notes = '') => {
+    const completeEmergency = async (emergencyId) => {
+        const deliveryNotes = prompt('Enter delivery notes (optional):');
+        
         try {
-            await axios.put(`http://localhost:5000/api/emergency/update/${emergencyId}`, {
-                status: newStatus,
-                notes: notes,
-                updatedBy: 'admin' // In real app, use actual admin ID
+            await axios.put(`http://localhost:5000/api/emergency/complete/${emergencyId}`, {
+                deliveryNotes: deliveryNotes || 'Resources delivered successfully',
+                completedBy: 'admin'
             });
             
-            fetchActiveEmergencies(); // Refresh the list
-            alert('Emergency status updated successfully');
+            fetchActiveEmergencies();
+            alert('Emergency marked as completed!');
         } catch (error) {
-            console.error('Failed to update emergency status:', error);
-            alert('Failed to update emergency status');
+            console.error('Failed to complete emergency:', error);
+            alert('Failed to complete emergency');
+        }
+    };
+
+    const deleteEmergency = async (emergencyId) => {
+        if (!window.confirm('Are you sure you want to delete this emergency? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await axios.delete(`http://localhost:5000/api/emergency/${emergencyId}`);
+            
+            fetchActiveEmergencies();
+            setSelectedEmergency(null);
+            alert('Emergency deleted successfully');
+        } catch (error) {
+            console.error('Failed to delete emergency:', error);
+            alert(error.response?.data?.error || 'Failed to delete emergency');
         }
     };
 
@@ -199,39 +217,27 @@ const EmergencyDashboard = () => {
                                     </div>
                                     
                                     <div className="action-buttons">
-                                        {emergency.status === 'received' && (
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    updateEmergencyStatus(emergency.emergencyId, 'dispatched');
-                                                }}
-                                                className="dispatch-btn"
-                                            >
-                                                Dispatch
-                                            </button>
-                                        )}
-                                        
-                                        {emergency.status === 'dispatched' && (
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    updateEmergencyStatus(emergency.emergencyId, 'en_route');
-                                                }}
-                                                className="enroute-btn"
-                                            >
-                                                En Route
-                                            </button>
-                                        )}
-                                        
                                         {emergency.status === 'en_route' && (
                                             <button 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    updateEmergencyStatus(emergency.emergencyId, 'completed');
+                                                    completeEmergency(emergency.emergencyId);
                                                 }}
                                                 className="complete-btn"
                                             >
-                                                Complete
+                                                ✓ Mark Complete
+                                            </button>
+                                        )}
+                                        
+                                        {emergency.status === 'completed' && (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    deleteEmergency(emergency.emergencyId);
+                                                }}
+                                                className="delete-btn"
+                                            >
+                                                🗑️ Delete
                                             </button>
                                         )}
                                     </div>
@@ -293,6 +299,46 @@ const EmergencyDashboard = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Show Dispatched Resources if available */}
+                            {selectedEmergency.dispatchDetails && (
+                                <div className="detail-section resources-provided">
+                                    <h3>✅ Resources Provided</h3>
+                                    <p className="dispatch-time">
+                                        <strong>Dispatched:</strong> {new Date(selectedEmergency.dispatchDetails.dispatchedAt).toLocaleString()}
+                                    </p>
+                                    <p className="dispatch-time">
+                                        <strong>ETA:</strong> {new Date(selectedEmergency.dispatchDetails.estimatedArrival).toLocaleTimeString()}
+                                    </p>
+                                    
+                                    <div className="centers-provided">
+                                        {selectedEmergency.dispatchDetails.centers?.map((center, idx) => (
+                                            <div key={idx} className="center-resources">
+                                                <h4>📦 {center.centerName}</h4>
+                                                <ul>
+                                                    {center.resources?.map((resource, ridx) => (
+                                                        <li key={ridx}>
+                                                            ✓ {resource.quantity} {resource.unit} of {resource.name}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                {center.route && (
+                                                    <p className="route-info">
+                                                        🚗 {center.route.distance?.toFixed(2)} km • {Math.round(center.route.duration)} min
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {selectedEmergency.dispatchDetails.deliveryNotes && (
+                                        <div className="delivery-notes">
+                                            <strong>Delivery Notes:</strong>
+                                            <p>{selectedEmergency.dispatchDetails.deliveryNotes}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="detail-section">
                                 <h3>Dispatch Control</h3>

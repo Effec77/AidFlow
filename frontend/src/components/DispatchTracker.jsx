@@ -56,20 +56,41 @@ const DispatchTracker = () => {
     };
 
     const calculateProgress = (dispatch) => {
+        // If completed, return 100%
+        if (dispatch.status === 'completed' || dispatch.status === 'delivered') {
+            return 100;
+        }
+
         if (!dispatch.dispatchDetails) return 0;
         
         const dispatchedTime = new Date(dispatch.dispatchDetails.dispatchedAt).getTime();
         const estimatedArrival = new Date(dispatch.dispatchDetails.estimatedArrival).getTime();
         const now = Date.now();
         
+        // If already past ETA, return 100%
+        if (now >= estimatedArrival) {
+            return 100;
+        }
+        
         const totalTime = estimatedArrival - dispatchedTime;
         const elapsed = now - dispatchedTime;
+        
+        // Ensure we have valid times
+        if (totalTime <= 0) return 0;
         
         const progress = Math.min(Math.max((elapsed / totalTime) * 100, 0), 100);
         return Math.round(progress);
     };
 
     const getTimeRemaining = (dispatch) => {
+        // If completed, show completion status
+        if (dispatch.status === 'completed') {
+            return 'Completed';
+        }
+        if (dispatch.status === 'delivered') {
+            return 'Delivered';
+        }
+
         if (!dispatch.dispatchDetails) return 'N/A';
         
         const estimatedArrival = new Date(dispatch.dispatchDetails.estimatedArrival).getTime();
@@ -194,6 +215,67 @@ const DispatchTracker = () => {
                                 </div>
                                 <div className="progress-label">
                                     {calculateProgress(dispatch)}% Complete
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="dispatch-actions">
+                                    {dispatch.status === 'dispatched' && (
+                                        <button 
+                                            className="action-btn enroute-btn"
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                try {
+                                                    await axios.put(`http://localhost:5000/api/emergency/update-status/${dispatch.emergencyId}`, {
+                                                        status: 'en_route',
+                                                        notes: 'Resources en route to location',
+                                                        updatedBy: 'admin'
+                                                    });
+                                                    fetchActiveDispatches();
+                                                } catch (error) {
+                                                    console.error('Failed to update status:', error);
+                                                }
+                                            }}
+                                        >
+                                            🚗 Mark En Route
+                                        </button>
+                                    )}
+                                    {dispatch.status === 'en_route' && (
+                                        <button 
+                                            className="action-btn complete-btn"
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                try {
+                                                    await axios.put(`http://localhost:5000/api/emergency/complete/${dispatch.emergencyId}`, {
+                                                        deliveryNotes: 'Resources delivered successfully',
+                                                        completedBy: 'admin'
+                                                    });
+                                                    fetchActiveDispatches();
+                                                } catch (error) {
+                                                    console.error('Failed to complete:', error);
+                                                }
+                                            }}
+                                        >
+                                            ✓ Mark Complete
+                                        </button>
+                                    )}
+                                    {dispatch.status === 'completed' && (
+                                        <button 
+                                            className="action-btn delete-btn"
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (window.confirm('Delete this completed dispatch?')) {
+                                                    try {
+                                                        await axios.delete(`http://localhost:5000/api/emergency/${dispatch.emergencyId}`);
+                                                        fetchActiveDispatches();
+                                                    } catch (error) {
+                                                        console.error('Failed to delete:', error);
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            🗑️ Delete
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))

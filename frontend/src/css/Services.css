@@ -49,6 +49,13 @@
   }
 }
 
+/* --- Service Card Link Wrapper --- */
+.service-card-link {
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+}
+
 /* --- Service Card Styles --- */
 .service-card {
   position: relative;

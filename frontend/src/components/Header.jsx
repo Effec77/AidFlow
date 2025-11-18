@@ -64,17 +64,27 @@ const Header = () => {
         {/* --- Right Section: Auth & Theme Toggle --- */}
         <nav className={`nav right-nav ${isNavActive ? 'active' : ''}`}>
           <ul className="nav-list">
+            {/* Emergency Operations Dropdown */}
+            <li className="auth-dropdown">
+              <span className="nav-link">🚨 Emergency Operations</span>
+              <div className="dropdown-menu">
+                <Link to="/emergency-dashboard" className="dropdown-item">⚡ Emergency Dashboard</Link>
+                <Link to="/dispatch-tracker" className="dropdown-item">📍 Dispatch Tracker</Link>
+                <Link to="/live-disasters" className="dropdown-item">🌍 Live Disasters</Link>
+                <Link to="/inventory-live" className="dropdown-item">📦 Live Inventory</Link>
+                <Link to="/routing" className="dropdown-item">🗺️ Smart Routing</Link>
+              </div>
+            </li>
+            
+            {/* Account Dropdown */}
             <li className="auth-dropdown">
               <span className="nav-link">Account</span>
               <div className="dropdown-menu">
                 <Link to="/login" className="dropdown-item">Login</Link>
                 <Link to="/register" className="dropdown-item">Register</Link>
-                <Link to="/emergency-dashboard" className="dropdown-item">Emergency Dashboard</Link>
-                <Link to="/dispatch-tracker" className="dropdown-item">📍 Dispatch Tracker</Link>
-                <Link to="/inventory-live" className="dropdown-item">Live Inventory</Link>
-                <Link to="/routing" className="dropdown-item">Smart Routing</Link>
               </div>
             </li>
+            
             <li>
               <button
                 onClick={toggleTheme}
