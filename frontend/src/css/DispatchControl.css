@@ -1,0 +1,338 @@
+/* Dispatch Control Styles */
+.dispatch-control {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 16px var(--shadow-color);
+}
+
+.dispatch-info h3 {
+    margin: 0 0 1rem 0;
+    color: var(--heading-color);
+    font-size: 1.5rem;
+}
+
+.dispatch-info p {
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.required-resources {
+    background: var(--secondary-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.required-resources h4 {
+    margin: 0 0 0.75rem 0;
+    color: var(--accent-color);
+    font-size: 1rem;
+}
+
+.required-resources ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--text-color);
+}
+
+.required-resources li {
+    margin-bottom: 0.5rem;
+}
+
+.dispatch-button {
+    width: 100%;
+    padding: 1.25rem 2rem;
+    background: linear-gradient(135deg, #DC2626, #EF4444);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dispatch-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(220, 38, 38, 0.5);
+    background: linear-gradient(135deg, #B91C1C, #DC2626);
+}
+
+.dispatch-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.dispatch-button.dispatching {
+    background: linear-gradient(135deg, #F59E0B, #F97316);
+}
+
+.button-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.dispatch-error {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid #DC2626;
+    border-radius: 8px;
+    color: #FCA5A5;
+    margin-bottom: 1rem;
+}
+
+.error-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.dispatch-progress {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--secondary-bg);
+    border-radius: 8px;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    color: var(--text-color);
+}
+
+.step-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-bg);
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.step-icon.active {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Dispatch Tracking */
+.dispatch-tracking {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 16px var(--shadow-color);
+}
+
+.tracking-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.success-icon {
+    width: 32px;
+    height: 32px;
+    color: #10B981;
+}
+
+.tracking-header h3 {
+    margin: 0;
+    color: var(--heading-color);
+    font-size: 1.5rem;
+}
+
+.tracking-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--secondary-bg);
+    border-radius: 8px;
+}
+
+.info-row .icon {
+    width: 24px;
+    height: 24px;
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+
+.info-row > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-row .label {
+    font-size: 0.75rem;
+    color: var(--muted-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.info-row .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.dispatch-centers h4 {
+    margin: 0 0 1rem 0;
+    color: var(--heading-color);
+    font-size: 1.2rem;
+}
+
+.center-card {
+    background: var(--secondary-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.center-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.center-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+
+.center-header h5 {
+    margin: 0 0 0.25rem 0;
+    color: var(--heading-color);
+    font-size: 1.1rem;
+}
+
+.distance {
+    font-size: 0.875rem;
+    color: var(--muted-text);
+}
+
+.resources-list {
+    padding: 1rem;
+    background: var(--primary-bg);
+    border-radius: 6px;
+}
+
+.resources-list strong {
+    color: var(--accent-color);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.resources-list ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--text-color);
+}
+
+.resources-list li {
+    margin-bottom: 0.25rem;
+}
+
+.unmet-needs {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid #F59E0B;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+
+.warning-icon {
+    width: 24px;
+    height: 24px;
+    color: #F59E0B;
+    flex-shrink: 0;
+}
+
+.unmet-needs strong {
+    color: #F59E0B;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.unmet-needs p {
+    color: var(--text-color);
+    margin: 0.5rem 0;
+}
+
+.unmet-needs ul {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.5rem;
+    color: var(--text-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dispatch-control,
+    .dispatch-tracking {
+        padding: 1.5rem;
+    }
+
+    .tracking-info {
+        grid-template-columns: 1fr;
+    }
+
+    .dispatch-button {
+        font-size: 1rem;
+        padding: 1rem 1.5rem;
+    }
+}

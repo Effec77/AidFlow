@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import NLPEngine from './nlpEngine.js';
+import ImageDisasterDetectionAgent from './imageDisasterDetection.js';
+import SmartRoutingAgent from './smartRouting.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,8 +15,10 @@ const __dirname = path.dirname(__filename);
  */
 class EmergencyAIAgent {
     constructor() {
-        // Initialize advanced NLP engine
-        this.nlpEngine = new NLPEngine();
+        // Initialize all 3 AI Agents
+        this.agent1_nlp = new NLPEngine();                          // Agent 1: NLP Sentiment Analysis
+        this.agent2_image = new ImageDisasterDetectionAgent();      // Agent 2: Image Disaster Detection
+        this.agent3_routing = new SmartRoutingAgent();              // Agent 3: Smart Routing
         this.satelliteAPIs = {
             // NASA FIRMS for fire detection
             firms: 'https://firms.modaps.eosdis.nasa.gov/api/area/csv',
@@ -47,17 +51,27 @@ class EmergencyAIAgent {
             // Step 2: Analyze disaster type and severity
             const disasterAnalysis = await this.analyzeDisasterType(locationData, emergencyData.message);
             
-            // Step 3: Perform advanced NLP analysis on user message
-            const nlpAnalysis = await this.nlpEngine.analyzeEmergencyText(emergencyData.message);
+            // Step 3: Agent 1 - Perform advanced NLP analysis on user message
+            console.log('🤖 Agent 1: NLP Sentiment Analysis');
+            const nlpAnalysis = await this.agent1_nlp.analyzeEmergencyText(emergencyData.message);
             
             // Step 4: Determine required resources
             const resourcePlan = await this.determineResourceNeeds(disasterAnalysis, nlpAnalysis);
             
-            // Step 5: Generate routing plan
-            const routingPlan = await this.generateOptimalRoute(emergencyData, resourcePlan);
+            // Generate emergency ID
+            const emergencyId = `EMG_${Date.now()}`;
+            
+            // Step 5: Agent 3 - Generate smart routing plan
+            console.log('🤖 Agent 3: Smart Routing');
+            const routingPlan = await this.agent3_routing.calculateOptimalRoute({
+                emergencyId: emergencyId,
+                location: emergencyData,
+                analysis: { disaster: disasterAnalysis, nlp: nlpAnalysis, severity: this.calculateSeverity(disasterAnalysis, nlpAnalysis) },
+                response: { resources: resourcePlan }
+            });
             
             return {
-                emergencyId: `EMG_${Date.now()}`,
+                emergencyId: emergencyId,
                 location: { lat: emergencyData.lat, lon: emergencyData.lon },
                 analysis: {
                     disaster: disasterAnalysis,

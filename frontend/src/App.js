@@ -25,6 +25,9 @@ import RecipientPage from "./components/RecipientPage.jsx";   // Recipient
 import ReliefAnalytics from "./components/ReliefAnalytics.jsx"; // Analytics
 import EmergencyRequest from "./components/EmergencyRequest.jsx"; // Emergency Request
 import EmergencyDashboard from "./components/EmergencyDashboard.jsx"; // Emergency Dashboard
+import InventoryIntegration from "./components/InventoryIntegration.jsx"; // Inventory Integration
+import RoutingVisualization from "./components/RoutingVisualization.jsx"; // Routing Visualization
+import DispatchTracker from "./components/DispatchTracker.jsx"; // Dispatch Tracker
 
 // 🎨 CSS Imports
 import "./css/style.css";
@@ -41,6 +44,9 @@ import "./css/DisasterMap.css";
 import "./css/InventoryPage.css";
 import "./css/ReliefAnalytics.css";
 import "./css/Emergency.css";
+import "./css/InventoryIntegration.css";
+import "./css/RoutingVisualization.css";
+import "./css/DispatchTracker.css";
 
 /* 🏠 Home Page Component */
 const Home = ({ predictionData, loading, error }) => {
@@ -142,6 +148,13 @@ function AppContent() {
         {/* Emergency System */}
         <Route path="/emergency" element={<EmergencyRequest userId="demo_user_123" />} />
         <Route path="/emergency-dashboard" element={<EmergencyDashboard />} />
+        <Route path="/dispatch-tracker" element={<DispatchTracker />} />
+        
+        {/* Inventory Integration */}
+        <Route path="/inventory-live" element={<InventoryIntegration />} />
+        
+        {/* Routing Visualization */}
+        <Route path="/routing" element={<RoutingVisualization />} />
       </Routes>
       <Footer />
     </div>
