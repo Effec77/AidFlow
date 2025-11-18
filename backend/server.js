@@ -17,6 +17,7 @@ import { InventoryItem, Location, Transaction } from './models/Inventory.js';
 import connectDB from "./db.js";
 import generateToken from './utils/tokenGenerator.js';
 import emergencyRoutes from './routes/emergency.js';
+import agentsRoutes from './routes/agents.js';
 // -----------------------------
 
 dotenv.config();
@@ -295,6 +296,11 @@ app.put("/api/admin/donation/:id", async (req, res) => {
 // ********* EMERGENCY AI AGENT ROUTES **********
 // **********************************************
 app.use('/api/emergency', emergencyRoutes);
+
+// **********************************************
+// ********* AI AGENTS CRUD ROUTES **************
+// **********************************************
+app.use('/api/agents', agentsRoutes);
 
 // **********************************************
 // ********* DISASTER PREDICTIONS API ***********

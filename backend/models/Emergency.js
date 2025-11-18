@@ -63,6 +63,31 @@ const emergencyRequestSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    dispatchDetails: {
+        dispatchedAt: Date,
+        dispatchedBy: String,
+        centers: [{
+            centerId: String,
+            centerName: String,
+            resources: [{
+                itemId: String,
+                name: String,
+                category: String,
+                quantity: Number,
+                unit: String
+            }],
+            route: {
+                distance: Number,
+                duration: Number,
+                eta: String,
+                waypoints: [mongoose.Schema.Types.Mixed]
+            }
+        }],
+        totalResources: { type: Map, of: Number },
+        estimatedArrival: Date,
+        actualArrival: Date,
+        deliveryNotes: String
+    },
     satelliteData: {
         weather: mongoose.Schema.Types.Mixed,
         fires: [mongoose.Schema.Types.Mixed],

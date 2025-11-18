@@ -243,4 +243,218 @@ async function reserveResources(resourcePlan) {
     }
 }
 
+/**
+ * POST /api/emergency/analyze-image
+ * Analyze disaster from image (Agent 2)
+ */
+router.post('/analyze-image', async (req, res) => {
+    try {
+        const { imageData, location, userId } = req.body;
+
+        if (!imageData || !location) {
+            return res.status(400).json({
+                error: 'Missing required fields: imageData, location'
+            });
+        }
+
+        console.log(`🖼️ Image analysis request from user ${userId} at ${location.lat}, ${location.lon}`);
+
+        // Use Agent 2 for image-based disaster detection
+        const imageAgent = new (await import('../services/imageDisasterDetection.js')).default();
+        const detection = await imageAgent.detectDisasterFromImage(imageData, location);
+
+        // Extract labels
+        const labels = imageAgent.extractLabels(detection);
+
+        res.status(200).json({
+            success: true,
+            detection: detection,
+            labels: labels,
+            message: 'Image analysis complete'
+        });
+
+    } catch (error) {
+        console.error('❌ Image analysis error:', error.message);
+        res.status(500).json({
+            error: 'Failed to analyze image',
+            details: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/emergency/reroute
+ * Request re-routing for active emergency (Agent 3)
+ */
+router.post('/reroute/:emergencyId', async (req, res) => {
+    try {
+        const { emergencyId } = req.params;
+        const { currentLocation } = req.body;
+
+        const emergency = await Emergency.findOne({ emergencyId });
+        if (!emergency) {
+            return res.status(404).json({ error: 'Emergency not found' });
+        }
+
+        console.log(`🔄 Re-routing request for emergency ${emergencyId}`);
+
+        // Use Agent 3 for smart re-routing
+        const routingAgent = new (await import('../services/smartRouting.js')).default();
+        const newRoute = await routingAgent.checkForReRouting(
+            emergency.response.routing,
+            currentLocation
+        );
+
+        if (newRoute) {
+            // Update emergency with new route
+            emergency.response.routing = newRoute;
+            emergency.timeline.push({
+                status: 'rerouted',
+                timestamp: new Date(),
+                notes: 'Route updated due to changing conditions'
+            });
+            await emergency.save();
+
+            res.json({
+                success: true,
+                newRoute: newRoute,
+                message: 'Route updated successfully'
+            });
+        } else {
+            res.json({
+                success: true,
+                message: 'Current route is still optimal'
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Re-routing error:', error.message);
+        res.status(500).json({
+            error: 'Failed to re-route',
+            details: error.message
+        });
+    }
+});
+
 export default router;
+/**
+
+ * POST /api/emergency/dispatch/:emergencyId
+ * ONE-CLICK DISPATCH - Automates inventory allocation, routing, and dispatch
+ */
+router.post('/dispatch/:emergencyId', async (req, res) => {
+    try {
+        const { emergencyId } = req.params;
+        const { adminId } = req.body;
+
+        if (!adminId) {
+            return res.status(400).json({
+                error: 'Admin ID required for dispatch authorization'
+            });
+        }
+
+        console.log(`🚀 Admin ${adminId} initiating dispatch for ${emergencyId}`);
+
+        // Import dispatch service
+        const DispatchService = (await import('../services/dispatchService.js')).default;
+        const dispatchService = new DispatchService();
+
+        // Execute automated dispatch
+        const result = await dispatchService.dispatchEmergency(emergencyId, adminId);
+
+        res.json(result);
+
+    } catch (error) {
+        console.error('❌ Dispatch error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/emergency/dispatch-status/:emergencyId
+ * Get dispatch status and tracking information
+ */
+router.get('/dispatch-status/:emergencyId', async (req, res) => {
+    try {
+        const { emergencyId } = req.params;
+
+        const DispatchService = (await import('../services/dispatchService.js')).default;
+        const dispatchService = new DispatchService();
+
+        const status = await dispatchService.getDispatchStatus(emergencyId);
+
+        res.json(status);
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * PUT /api/emergency/update-status/:emergencyId
+ * Update emergency status (en-route, arrived, completed)
+ */
+router.put('/update-status/:emergencyId', async (req, res) => {
+    try {
+        const { emergencyId } = req.params;
+        const { status, notes, updatedBy } = req.body;
+
+        const emergency = await Emergency.findOne({ emergencyId });
+        if (!emergency) {
+            return res.status(404).json({ error: 'Emergency not found' });
+        }
+
+        emergency.status = status;
+        emergency.timeline.push({
+            status,
+            timestamp: new Date(),
+            notes: notes || `Status updated to ${status}`,
+            updatedBy
+        });
+
+        await emergency.save();
+
+        res.json({
+            success: true,
+            emergencyId,
+            status: emergency.status,
+            timeline: emergency.timeline
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/emergency/active-dispatches
+ * Get all active dispatches for real-time tracking
+ */
+router.get('/active-dispatches', async (req, res) => {
+    try {
+        const dispatches = await Emergency.find({
+            status: { $in: ['dispatched', 'en_route', 'delivered'] }
+        }).sort({ 'dispatchDetails.dispatchedAt': -1 });
+
+        res.json({
+            success: true,
+            count: dispatches.length,
+            dispatches: dispatches
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});

@@ -65,8 +65,9 @@
 
 /* Light Mode Styling */
 body.light .service-card {
-  background-color: var(--card-bg);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: #FFFFFF;
+  border: 2px solid #E2E8F0;
+  box-shadow: 0 4px 12px rgba(43, 108, 176, 0.08);
 }
 
 /* Hover States */
@@ -79,10 +80,11 @@ body.light .service-card {
 }
 
 body.light .service-card:hover {
-  background-color: var(--secondary-bg);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  background-color: #EBF8FF;
+  box-shadow: 0 8px 28px rgba(43, 108, 176, 0.18);
   border-image: none;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 2px solid #3182CE;
+  transform: translateY(-8px);
 }
 
 /* Background overlay */
@@ -121,11 +123,20 @@ body.light .service-card:hover {
   font-weight: 600;
   color: var(--heading-color);
   margin-bottom: 0.75rem;
-  transition: color 0.4s ease-in-out;
+  transition: color 0.3s ease;
 }
 
 .service-card:hover .service-title {
   color: var(--accent-color);
+}
+
+body.light .service-title {
+  color: #1A202C;
+  font-weight: 700;
+}
+
+body.light .service-card:hover .service-title {
+  color: #2B6CB0;
 }
 
 .service-description {
@@ -133,4 +144,9 @@ body.light .service-card:hover {
   font-size: 1rem;
   line-height: 1.6;
   margin-top: 0.5rem;
+}
+
+body.light .service-description {
+  color: #4A5568;
+  font-weight: 500;
 }

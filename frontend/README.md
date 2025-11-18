@@ -1,70 +1,228 @@
-# Getting Started with Create React App
+# 🎨 AidFlow AI - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> React 18 Frontend Application
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 📁 Structure
 
-### `npm start`
+```
+frontend/src/
+├── components/          # React Components
+│   ├── 🏠 Core
+│   │   ├── Header.jsx
+│   │   ├── Footer.jsx
+│   │   ├── Hero.jsx
+│   │   └── About.jsx
+│   │
+│   ├── 🚨 Emergency
+│   │   ├── EmergencyRequest.jsx
+│   │   ├── EmergencyDashboard.jsx
+│   │   ├── DispatchControl.jsx
+│   │   └── DispatchTracker.jsx
+│   │
+│   ├── 📦 Inventory
+│   │   ├── InventoryPage.jsx
+│   │   └── InventoryIntegration.jsx
+│   │
+│   └── 🗺️ Routing
+│       └── RoutingVisualization.jsx
+│
+├── css/                # Stylesheets
+│   ├── style.css       # Global + Theme
+│   ├── Emergency.css
+│   ├── DispatchControl.css
+│   └── [component styles]
+│
+├── App.js              # Main App + Routes
+└── index.js            # Entry Point
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🚀 Setup
 
-### `npm test`
+### Install Dependencies
+```bash
+npm install
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Run Development Server
+```bash
+npm start
+```
 
-### `npm run build`
+Access at: http://localhost:3000
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Build for Production
+```bash
+npm run build
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🎯 Main Pages
 
-### `npm run eject`
+### Home (/)
+Landing page with hero, services, team
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Emergency (/emergency)
+Submit emergency requests
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Emergency Dashboard (/emergency-dashboard)
+Admin view of all emergencies
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Dispatch Tracker (/dispatch-tracker)
+Real-time tracking map
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Routing (/routing)
+Smart routing visualization
 
-## Learn More
+### Inventory (/inventory-live)
+Live inventory management
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🎨 Styling
 
-### Code Splitting
+### Theme System
+- Dark mode (default)
+- Light mode toggle
+- CSS variables in `style.css`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Component Styles
+Each component has dedicated CSS file
 
-### Analyzing the Bundle Size
+### Responsive Design
+Mobile-first approach
+- Desktop: Full layout
+- Tablet: Adapted layout
+- Mobile: Stacked layout
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## 🗺️ Key Components
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### DispatchTracker.jsx
+**Features:**
+- Interactive Leaflet map
+- Real-time updates (10s)
+- Multiple dispatch tracking
+- Progress bars
+- ETA calculations
 
-### Advanced Configuration
+**Dependencies:**
+- react-leaflet
+- leaflet
+- axios
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### EmergencyRequest.jsx
+**Features:**
+- Location detection
+- AI-powered analysis
+- Form validation
+- Success confirmation
 
-### Deployment
+### DispatchControl.jsx
+**Features:**
+- One-click dispatch
+- Progress tracking
+- Resource allocation display
+- Error handling
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+---
 
-### `npm run build` fails to minify
+## 📦 Dependencies
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Core
+- react: ^18.2.0
+- react-router-dom: ^6.x
+- axios: ^1.x
+
+### UI
+- lucide-react: Icons
+- react-leaflet: Maps
+- leaflet: Map library
+
+### Styling
+- tailwindcss: Utility CSS
+- Custom CSS modules
+
+---
+
+## 🔧 Configuration
+
+### API Endpoint
+Update in components:
+```javascript
+const API_URL = 'http://localhost:5000';
+```
+
+### Theme
+Toggle in Header component
+Stored in localStorage
+
+---
+
+## 🎯 Routes
+
+```javascript
+/                       # Home
+/emergency              # Submit Emergency
+/emergency-dashboard    # Admin Dashboard
+/dispatch-tracker       # Live Tracking
+/routing                # Smart Routing
+/inventory-live         # Inventory
+/login                  # Login
+/register               # Register
+```
+
+---
+
+## 📱 Responsive Breakpoints
+
+```css
+Mobile:  < 768px
+Tablet:  768px - 1024px
+Desktop: > 1024px
+```
+
+---
+
+## 🎨 Color Scheme
+
+### Dark Mode (Default)
+```css
+--primary-bg: #0F1419
+--text-color: #F0F4F8
+--accent-color: #FFD54F
+```
+
+### Light Mode
+```css
+--primary-bg: #F0F4F8
+--text-color: #2D3748
+--accent-color: #3182CE
+```
+
+---
+
+## 🚀 Performance
+
+- Code splitting
+- Lazy loading
+- Optimized images
+- Memoized components
+
+---
+
+## 🧪 Testing
+
+```bash
+npm test
+```
+
+---
+
+**Version:** 1.0.0
+**Status:** Production Ready ✅

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, MapPin, Clock, Users, TrendingUp, Activity } from 'lucide-react';
+import { AlertTriangle, MapPin, Clock, Users, TrendingUp, Activity, Navigation } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import DispatchControl from './DispatchControl';
 
 const EmergencyDashboard = () => {
+    const navigate = useNavigate();
     const [activeEmergencies, setActiveEmergencies] = useState([]);
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -84,8 +87,17 @@ const EmergencyDashboard = () => {
     return (
         <div className="emergency-dashboard">
             <div className="dashboard-header">
-                <h1>🚨 Emergency Response Dashboard</h1>
-                <p>AI-powered emergency management system</p>
+                <div>
+                    <h1>🚨 Emergency Response Dashboard</h1>
+                    <p>AI-powered emergency management system</p>
+                </div>
+                <button 
+                    className="dispatch-tracker-btn"
+                    onClick={() => navigate('/dispatch-tracker')}
+                >
+                    <Navigation size={20} />
+                    <span>Live Dispatch Tracker</span>
+                </button>
             </div>
 
             {/* Analytics Cards */}
@@ -280,6 +292,23 @@ const EmergencyDashboard = () => {
                                         </ul>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="detail-section">
+                                <h3>Dispatch Control</h3>
+                                <DispatchControl 
+                                    emergency={selectedEmergency}
+                                    onDispatchComplete={(result) => {
+                                        console.log('Dispatch completed:', result);
+                                        fetchActiveEmergencies(); // Refresh list
+                                        // Update selected emergency with dispatch details
+                                        setSelectedEmergency({
+                                            ...selectedEmergency,
+                                            status: 'dispatched',
+                                            dispatchDetails: result.dispatch
+                                        });
+                                    }}
+                                />
                             </div>
 
                             <div className="detail-section">
