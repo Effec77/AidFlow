@@ -93,39 +93,99 @@ const RoutingVisualization = () => {
             <div className="routing-controls">
                 <div className="location-inputs">
                     <div className="input-group">
-                        <label>Origin (Response Center)</label>
-                        <input
-                            type="number"
-                            step="0.0001"
-                            value={origin.lat}
-                            onChange={(e) => setOrigin({...origin, lat: parseFloat(e.target.value)})}
-                            placeholder="Latitude"
-                        />
-                        <input
-                            type="number"
-                            step="0.0001"
-                            value={origin.lon}
-                            onChange={(e) => setOrigin({...origin, lon: parseFloat(e.target.value)})}
-                            placeholder="Longitude"
-                        />
+                        <div className="input-header">
+                            <label>Origin (Response Center)</label>
+                            <button
+                                className="location-picker-btn"
+                                onClick={() => {
+                                    if (navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition(
+                                            (position) => {
+                                                setOrigin({
+                                                    ...origin,
+                                                    lat: position.coords.latitude,
+                                                    lon: position.coords.longitude,
+                                                    name: 'Current Location'
+                                                });
+                                            },
+                                            (error) => {
+                                                alert('Unable to get location: ' + error.message);
+                                            }
+                                        );
+                                    } else {
+                                        alert('Geolocation is not supported by your browser');
+                                    }
+                                }}
+                                title="Use current location as origin"
+                            >
+                                <MapPin size={16} />
+                                Use My Location
+                            </button>
+                        </div>
+                        <div className="coordinate-inputs">
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value={origin.lat}
+                                onChange={(e) => setOrigin({...origin, lat: parseFloat(e.target.value)})}
+                                placeholder="Latitude"
+                            />
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value={origin.lon}
+                                onChange={(e) => setOrigin({...origin, lon: parseFloat(e.target.value)})}
+                                placeholder="Longitude"
+                            />
+                        </div>
                     </div>
 
                     <div className="input-group">
-                        <label>Destination (Emergency Location)</label>
-                        <input
-                            type="number"
-                            step="0.0001"
-                            value={destination.lat}
-                            onChange={(e) => setDestination({...destination, lat: parseFloat(e.target.value)})}
-                            placeholder="Latitude"
-                        />
-                        <input
-                            type="number"
-                            step="0.0001"
-                            value={destination.lon}
-                            onChange={(e) => setDestination({...destination, lon: parseFloat(e.target.value)})}
-                            placeholder="Longitude"
-                        />
+                        <div className="input-header">
+                            <label>Destination (Emergency Location)</label>
+                            <button
+                                className="location-picker-btn"
+                                onClick={() => {
+                                    if (navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition(
+                                            (position) => {
+                                                setDestination({
+                                                    ...destination,
+                                                    lat: position.coords.latitude,
+                                                    lon: position.coords.longitude,
+                                                    name: 'Current Location'
+                                                });
+                                            },
+                                            (error) => {
+                                                alert('Unable to get location: ' + error.message);
+                                            }
+                                        );
+                                    } else {
+                                        alert('Geolocation is not supported by your browser');
+                                    }
+                                }}
+                                title="Use current location as destination"
+                            >
+                                <MapPin size={16} />
+                                Use My Location
+                            </button>
+                        </div>
+                        <div className="coordinate-inputs">
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value={destination.lat}
+                                onChange={(e) => setDestination({...destination, lat: parseFloat(e.target.value)})}
+                                placeholder="Latitude"
+                            />
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value={destination.lon}
+                                onChange={(e) => setDestination({...destination, lon: parseFloat(e.target.value)})}
+                                placeholder="Longitude"
+                            />
+                        </div>
                     </div>
                 </div>
 

@@ -91,6 +91,13 @@
     gap: 0.75rem;
 }
 
+.input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
 .input-group label {
     font-weight: 600;
     color: var(--text-color);
@@ -101,9 +108,53 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-size: 0.85rem;
+    flex: 1;
 }
 
-.input-group input {
+.location-picker-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.location-picker-btn:hover {
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.location-picker-btn:active {
+    transform: translateY(0);
+}
+
+body.light .location-picker-btn {
+    background: linear-gradient(135deg, #3182CE, #2C5282);
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+}
+
+body.light .location-picker-btn:hover {
+    background: linear-gradient(135deg, #2C5282, #2B6CB0);
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+}
+
+.coordinate-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.coordinate-inputs input {
     padding: 1rem 1.25rem;
     background: var(--primary-bg);
     border: 2px solid rgba(255, 255, 255, 0.1);
@@ -114,7 +165,7 @@
     font-family: 'Lato', sans-serif;
 }
 
-.input-group input:focus {
+.coordinate-inputs input:focus {
     outline: none;
     border-color: var(--accent-color);
     background: var(--secondary-bg);
@@ -122,7 +173,7 @@
     transform: translateY(-1px);
 }
 
-.input-group input::placeholder {
+.coordinate-inputs input::placeholder {
     color: var(--text-color);
     opacity: 0.5;
 }
@@ -462,6 +513,21 @@
     .location-inputs {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    .input-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .location-picker-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .coordinate-inputs {
+        grid-template-columns: 1fr;
     }
 
     .route-info {
