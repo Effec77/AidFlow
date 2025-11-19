@@ -794,6 +794,54 @@ body.light .form-group textarea:focus {
     font-family: inherit;
 }
 
+/* Location Input Group */
+.location-input-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+.location-input {
+    flex: 1;
+}
+
+.location-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.location-btn:hover {
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.location-btn:active {
+    transform: translateY(0);
+}
+
+body.light .location-btn {
+    background: linear-gradient(135deg, #3182CE, #2C5282);
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+}
+
+body.light .location-btn:hover {
+    background: linear-gradient(135deg, #2C5282, #2B6CB0);
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+}
+
 .modal-actions {
     display: flex;
     gap: 1rem;
@@ -840,22 +888,51 @@ body.light .btn-secondary:hover {
     border: none;
     border-radius: 10px;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.5);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.6);
     background: linear-gradient(135deg, #B91C1C, #DC2626);
 }
 
 .btn-primary:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    background: linear-gradient(135deg, #9CA3AF, #6B7280);
+    box-shadow: none;
+}
+
+body.light .btn-primary {
+    background: linear-gradient(135deg, #DC2626, #EF4444);
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+}
+
+body.light .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #B91C1C, #DC2626);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.5);
 }
 
 /* Animations */
@@ -979,5 +1056,12 @@ body.light .btn-secondary:hover {
     .create-modal {
         margin: 0.5rem;
         max-height: 95vh;
+    }
+    .location-input-group {
+        flex-direction: column;
+    }
+    .location-btn {
+        width: 100%;
+        justify-content: center;
     }
 }

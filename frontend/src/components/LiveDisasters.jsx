@@ -600,6 +600,51 @@ const LiveDisasters = () => {
                                         placeholder="0"
                                     />
                                 </div>
+                                <div className="form-group full-width">
+                                    <label>Location</label>
+                                    <div className="location-input-group">
+                                        <input
+                                            type="text"
+                                            value={newDisaster.location.address}
+                                            onChange={(e) => setNewDisaster({
+                                                ...newDisaster, 
+                                                location: {...newDisaster.location, address: e.target.value}
+                                            })}
+                                            placeholder="Enter location or use current location"
+                                            className="location-input"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="location-btn"
+                                            onClick={() => {
+                                                if (navigator.geolocation) {
+                                                    navigator.geolocation.getCurrentPosition(
+                                                        (position) => {
+                                                            setNewDisaster({
+                                                                ...newDisaster,
+                                                                location: {
+                                                                    ...newDisaster.location,
+                                                                    lat: position.coords.latitude,
+                                                                    lon: position.coords.longitude,
+                                                                    address: `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`
+                                                                }
+                                                            });
+                                                        },
+                                                        (error) => {
+                                                            alert('Unable to get location: ' + error.message);
+                                                        }
+                                                    );
+                                                } else {
+                                                    alert('Geolocation is not supported by your browser');
+                                                }
+                                            }}
+                                            title="Use current location"
+                                        >
+                                            <MapPin size={18} />
+                                            Use My Location
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className="form-group">
                                     <label>Latitude</label>
                                     <input
@@ -610,6 +655,7 @@ const LiveDisasters = () => {
                                             ...newDisaster, 
                                             location: {...newDisaster.location, lat: parseFloat(e.target.value)}
                                         })}
+                                        placeholder="30.7171"
                                     />
                                 </div>
                                 <div className="form-group">
@@ -622,6 +668,7 @@ const LiveDisasters = () => {
                                             ...newDisaster, 
                                             location: {...newDisaster.location, lon: parseFloat(e.target.value)}
                                         })}
+                                        placeholder="76.8537"
                                     />
                                 </div>
                                 <div className="form-group full-width">

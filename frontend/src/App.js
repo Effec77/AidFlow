@@ -32,6 +32,8 @@ import LiveDisasters from "./components/LiveDisasters.jsx"; // Live Disasters
 
 // 🎨 CSS Imports
 import "./css/style.css";
+import "./css/page-spacing.css"; // Page spacing to prevent navbar overlap
+import "./css/performance-optimizations.css"; // Performance improvements
 import "./css/Header.css";
 import "./css/Hero.css";
 import "./css/About.css";

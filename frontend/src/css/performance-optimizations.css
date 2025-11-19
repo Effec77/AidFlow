@@ -1,0 +1,447 @@
+/**
+ * Performance Optimizations for Smooth Scrolling
+ * This file reduces heavy animations and improves scroll performance
+ */
+
+/* ============================================
+   PAGE SPACING - PREVENT NAVBAR OVERLAP
+   ============================================ */
+
+/* Add top padding to all main page containers */
+.emergency-dashboard,
+.dispatch-tracker,
+.live-disasters,
+.routing-visualization,
+.inventory-page,
+.relief-analytics,
+.volunteer-page,
+.recipient-page {
+  padding-top: 130px !important;
+  min-height: 100vh;
+}
+
+/* Home page sections - scroll margin for smooth anchor links */
+#hero,
+#about,
+#services,
+#team,
+#contact {
+  scroll-margin-top: 120px;
+  padding-top: 2rem;
+}
+
+/* Ensure first section (hero) has proper spacing */
+.hero-section {
+  padding-top: 150px !important;
+  min-height: 100vh;
+}
+
+/* Login and Register pages */
+.login-container,
+.register-container {
+  padding-top: 130px !important;
+  min-height: 100vh;
+}
+
+/* Emergency request page */
+.emergency-request-container {
+  padding-top: 130px !important;
+  min-height: calc(100vh - 130px);
+}
+
+/* Inventory integration page */
+.inventory-integration {
+  padding-top: 130px !important;
+  min-height: 100vh;
+}
+
+/* Disaster map page */
+.disaster-map-container {
+  padding-top: 130px !important;
+}
+
+/* About, Services, Team, Contact sections on home page */
+.about-section,
+.services-section,
+.team-section,
+.contact-section {
+  padding-top: 4rem !important;
+  padding-bottom: 4rem !important;
+}
+
+/* Ensure headers within pages don't get hidden */
+.dashboard-header,
+.tracker-header,
+.disasters-header,
+.routing-header {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Fix for modals - they should not be affected by page padding */
+.modal-overlay,
+.modal-content {
+  padding-top: 0 !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .emergency-dashboard,
+  .dispatch-tracker,
+  .live-disasters,
+  .routing-visualization,
+  .inventory-page {
+    padding-top: 100px !important;
+  }
+  
+  .hero-section {
+    padding-top: 120px !important;
+  }
+  
+  #hero,
+  #about,
+  #services,
+  #team,
+  #contact {
+    scroll-margin-top: 80px;
+  }
+}
+
+/* ============================================
+   SMOOTH SCROLLING OPTIMIZATIONS
+   ============================================ */
+
+/* Use CSS containment for better performance */
+* {
+  /* Reduce repaints and reflows */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Optimize scroll behavior */
+html {
+  scroll-behavior: smooth;
+  /* Enable hardware acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   DISABLE HEAVY BACKGROUND ANIMATIONS
+   ============================================ */
+
+/* Remove animated gradients on body */
+body:not(.light),
+body.light {
+  animation: none !important;
+}
+
+/* Reduce particle animation intensity */
+body:not(.light)::before {
+  animation: none !important;
+  opacity: 0.3 !important;
+}
+
+/* ============================================
+   OPTIMIZE CARD ANIMATIONS
+   ============================================ */
+
+/* Reduce hover effects that cause repaints */
+.service-card,
+.analytics-card,
+.disaster-card,
+.emergency-card {
+  /* Use transform instead of top/left for better performance */
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.service-card:hover,
+.analytics-card:hover,
+.disaster-card:hover {
+  /* Only transform, no layout changes */
+  transform: translateY(-4px) !important;
+}
+
+/* ============================================
+   OPTIMIZE INFINITE ANIMATIONS
+   ============================================ */
+
+/* Reduce pulse animation frequency */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Simplify glow animations */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Optimize spin animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   REDUCE SCROLL-TRIGGERED ANIMATIONS
+   ============================================ */
+
+/* Faster, simpler fade-in animations */
+.hidden-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.visible-section {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Remove will-change from static elements */
+.service-card,
+.analytics-card,
+.info-card {
+  will-change: auto !important;
+}
+
+/* Only use will-change during hover */
+.service-card:hover,
+.analytics-card:hover {
+  will-change: transform;
+}
+
+/* ============================================
+   OPTIMIZE FIXED ELEMENTS
+   ============================================ */
+
+/* Improve fixed header performance */
+.header {
+  /* Use transform for positioning when possible */
+  will-change: transform;
+  /* Enable GPU acceleration */
+  transform: translateZ(0);
+}
+
+/* ============================================
+   OPTIMIZE MAP PERFORMANCE
+   ============================================ */
+
+/* Reduce map container repaints */
+.map-container,
+.disasters-map,
+.leaflet-container {
+  /* Isolate map rendering */
+  contain: layout style paint;
+  /* Enable GPU acceleration */
+  transform: translateZ(0);
+}
+
+/* ============================================
+   OPTIMIZE MODAL ANIMATIONS
+   ============================================ */
+
+/* Faster modal animations */
+.modal-overlay {
+  animation-duration: 0.2s !important;
+}
+
+.create-modal,
+.modal-content {
+  animation-duration: 0.3s !important;
+}
+
+/* ============================================
+   OPTIMIZE BUTTON ANIMATIONS
+   ============================================ */
+
+/* Reduce button transition time */
+button,
+.btn,
+.action-btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
+}
+
+/* ============================================
+   OPTIMIZE CAROUSEL/SCROLL ANIMATIONS
+   ============================================ */
+
+/* Reduce carousel animation speed for smoother performance */
+@keyframes scroll-down {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes scroll-up {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+
+/* Pause animations when not in viewport */
+.carousel-left,
+.carousel-right {
+  animation-play-state: running;
+}
+
+/* ============================================
+   OPTIMIZE GRADIENT ANIMATIONS
+   ============================================ */
+
+/* Simplify gradient animations */
+@keyframes gradientMove {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Reduce gradient animation frequency */
+.gradient-text,
+.rainbow-border {
+  animation-duration: 4s !important; /* Slower = smoother */
+}
+
+/* ============================================
+   OPTIMIZE LOADING SPINNERS
+   ============================================ */
+
+/* Ensure spinners use GPU acceleration */
+.spinner,
+.spinner-large,
+.loading-spinner {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* ============================================
+   OPTIMIZE SCROLL PERFORMANCE
+   ============================================ */
+
+/* Improve scroll container performance */
+.disasters-list,
+.dispatch-list,
+.modal-body,
+.detail-panel {
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Optimize scroll performance */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ============================================
+   REDUCE SHADOW COMPLEXITY
+   ============================================ */
+
+/* Simplify box shadows for better performance */
+.card,
+.service-card,
+.analytics-card {
+  box-shadow: 0 4px 12px var(--shadow-color) !important;
+}
+
+.card:hover,
+.service-card:hover {
+  box-shadow: 0 8px 20px var(--shadow-color) !important;
+}
+
+/* ============================================
+   OPTIMIZE TEXT RENDERING
+   ============================================ */
+
+/* Improve text rendering performance */
+body,
+.container,
+.content {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   DEBOUNCE RESIZE EVENTS
+   ============================================ */
+
+/* Prevent layout thrashing on resize */
+@media (max-width: 768px) {
+  * {
+    transition-duration: 0.2s !important;
+  }
+}
+
+/* ============================================
+   OPTIMIZE BACKDROP FILTERS
+   ============================================ */
+
+/* Reduce backdrop-filter usage (expensive) */
+.modal-overlay,
+.header {
+  backdrop-filter: blur(4px) !important; /* Reduced from higher values */
+}
+
+/* Remove backdrop-filter on low-end devices */
+@media (max-width: 768px) {
+  .modal-overlay,
+  .header {
+    backdrop-filter: none !important;
+  }
+}
+
+/* ============================================
+   OPTIMIZE TRANSFORM ANIMATIONS
+   ============================================ */
+
+/* Use transform3d for better GPU acceleration */
+.service-card:hover {
+  transform: translate3d(0, -4px, 0) !important;
+}
+
+.disaster-card:hover {
+  transform: translate3d(4px, 0, 0) !important;
+}
+
+/* ============================================
+   REDUCE ANIMATION ON SCROLL
+   ============================================ */
+
+/* Pause non-critical animations during scroll */
+@media (hover: hover) {
+  .service-card,
+  .analytics-card {
+    transition: transform 0.2s ease !important;
+  }
+}
+
+/* ============================================
+   OPTIMIZE FOR 60 FPS
+   ============================================ */
+
+/* Ensure animations run at 60fps */
+@keyframes optimizedFadeIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Use optimized animations */
+.fade-in {
+  animation: optimizedFadeIn 0.3s ease-out;
+}
