@@ -18,6 +18,8 @@ import connectDB from "./db.js";
 import generateToken from './utils/tokenGenerator.js';
 import emergencyRoutes from './routes/emergency.js';
 import agentsRoutes from './routes/agents.js';
+import inventoryRoutes from './routes/inventory.js';
+import disastersRoutes from './routes/disasters.js';
 // -----------------------------
 
 dotenv.config();
@@ -301,6 +303,17 @@ app.use('/api/emergency', emergencyRoutes);
 // ********* AI AGENTS CRUD ROUTES **************
 // **********************************************
 app.use('/api/agents', agentsRoutes);
+
+// **********************************************
+// ********* INVENTORY & DONATIONS ROUTES *******
+// **********************************************
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api', inventoryRoutes); // For /api/donations and /api/requests
+
+// **********************************************
+// ********* LIVE DISASTERS ROUTES **************
+// **********************************************
+app.use('/api/disasters', disastersRoutes);
 
 // **********************************************
 // ********* DISASTER PREDICTIONS API ***********

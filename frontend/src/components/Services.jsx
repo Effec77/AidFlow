@@ -8,7 +8,7 @@ const Services = () => {
       icon: 'exclamation-triangle',
       title: 'Live Disasters',
       description: 'Track ongoing disasters in real time...',
-      url: '/disasters',
+      url: '/live-disasters',
       bgUrl: '/imgs/live_dist.jpg',
     },
     {

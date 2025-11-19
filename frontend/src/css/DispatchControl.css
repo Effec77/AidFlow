@@ -45,7 +45,7 @@
 .dispatch-button {
     width: 100%;
     padding: 1.25rem 2rem;
-    background: linear-gradient(135deg, #DC2626, #EF4444);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 12px;
@@ -56,16 +56,40 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    position: relative;
+    overflow: hidden;
+}
+
+.dispatch-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.dispatch-button:hover::before {
+    width: 400px;
+    height: 400px;
 }
 
 .dispatch-button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(220, 38, 38, 0.5);
-    background: linear-gradient(135deg, #B91C1C, #DC2626);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.dispatch-button:active:not(:disabled) {
+    transform: translateY(-2px) scale(0.98);
 }
 
 .dispatch-button:disabled {

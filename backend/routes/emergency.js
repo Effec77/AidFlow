@@ -441,14 +441,136 @@ router.put('/update-status/:emergencyId', async (req, res) => {
  */
 router.get('/active-dispatches', async (req, res) => {
     try {
+        // Include completed emergencies from last 24 hours for deletion
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        
         const dispatches = await Emergency.find({
-            status: { $in: ['dispatched', 'en_route', 'delivered'] }
+            $or: [
+                { status: { $in: ['dispatched', 'en_route', 'delivered'] } },
+                { status: 'completed', updatedAt: { $gte: oneDayAgo } }
+            ]
         }).sort({ 'dispatchDetails.dispatchedAt': -1 });
 
         res.json({
             success: true,
             count: dispatches.length,
             dispatches: dispatches
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * DELETE /api/emergency/:emergencyId
+ * Delete a completed emergency
+ */
+router.delete('/:emergencyId', async (req, res) => {
+    try {
+        const { emergencyId } = req.params;
+
+        const emergency = await Emergency.findOne({ emergencyId });
+        
+        if (!emergency) {
+            return res.status(404).json({
+                success: false,
+                error: 'Emergency not found'
+            });
+        }
+
+        // Only allow deletion of completed emergencies
+        if (emergency.status !== 'completed' && emergency.status !== 'cancelled') {
+            return res.status(400).json({
+                success: false,
+                error: 'Can only delete completed or cancelled emergencies'
+            });
+        }
+
+        await Emergency.deleteOne({ emergencyId });
+
+        res.json({
+            success: true,
+            message: 'Emergency deleted successfully',
+            emergencyId
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * PUT /api/emergency/complete/:emergencyId
+ * Mark emergency as completed with delivery confirmation
+ */
+router.put('/complete/:emergencyId', async (req, res) => {
+    try {
+        const { emergencyId } = req.params;
+        const { deliveryNotes, completedBy } = req.body;
+
+        const emergency = await Emergency.findOne({ emergencyId });
+        
+        if (!emergency) {
+            return res.status(404).json({
+                success: false,
+                error: 'Emergency not found'
+            });
+        }
+
+        // Update status to completed
+        emergency.status = 'completed';
+        
+        // Add completion details
+        if (emergency.dispatchDetails) {
+            emergency.dispatchDetails.actualArrival = new Date();
+            emergency.dispatchDetails.deliveryNotes = deliveryNotes || 'Resources delivered successfully';
+        }
+
+        // Add to timeline
+        emergency.timeline.push({
+            status: 'completed',
+            timestamp: new Date(),
+            notes: deliveryNotes || 'Emergency resolved. Resources delivered successfully.',
+            updatedBy: completedBy
+        });
+
+        await emergency.save();
+
+        res.json({
+            success: true,
+            message: 'Emergency marked as completed',
+            emergency
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/emergency/completed
+ * Get all completed emergencies
+ */
+router.get('/completed', async (req, res) => {
+    try {
+        const completedEmergencies = await Emergency.find({
+            status: 'completed'
+        }).sort({ updatedAt: -1 }).limit(50);
+
+        res.json({
+            success: true,
+            count: completedEmergencies.length,
+            emergencies: completedEmergencies
         });
 
     } catch (error) {
