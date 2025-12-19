@@ -1,6 +1,7 @@
 /* --- Team Section --- */
 .team-section {
-  padding: 3rem 0; /* Reduced to avoid huge gaps */
+  padding: 3rem 0;
+  /* Reduced to avoid huge gaps */
   margin: 0 auto;
   max-width: 1200px;
   width: 90%;
@@ -19,24 +20,21 @@
   z-index: 2;
 }
 
-/* Grid Layout */
+/* Grid Layout -> Flexbox for better centering of 3 items */
 .team-grid {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 2rem;
   margin-top: 2rem;
 }
 
-@media (min-width: 768px) {
-  .team-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .team-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+/* We don't need strict column media queries for Flexbox centering */
+.team-member {
+  flex: 0 1 300px;
+  /* Base width 300px, but can shrink */
+  min-width: 280px;
+  max-width: 350px;
 }
 
 /* --- Team Member Card --- */
@@ -53,6 +51,11 @@
   text-align: center;
   z-index: 2;
   position: relative;
+
+  /* Flex sizing for centered layout */
+  flex: 0 1 300px;
+  min-width: 250px;
+  max-width: 350px;
 }
 
 /* Subtle glow animation overlay */
@@ -82,15 +85,26 @@
   height: 140px;
   border-radius: 50%;
   overflow: hidden;
-  margin-bottom: 1.5rem;
+  margin: 0 auto 1.5rem auto;
+  /* Center horizontally with margin auto */
   position: relative;
   transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   border: 3px solid var(--brand-color, #61dafb);
   z-index: 2;
+  display: flex;
+  /* Ensure centering of child */
+  justify-content: center;
+  align-items: center;
 }
 
 .team-member:hover .member-photo-container {
   transform: scale(1.1) rotate(2deg);
+}
+
+.member-photo {
+  width: 100%;
+  height: 100%;
+  display: flex;
 }
 
 .member-photo img {

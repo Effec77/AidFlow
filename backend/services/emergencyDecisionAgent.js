@@ -14,7 +14,7 @@ class EmergencyDecisionAgent {
         // Initialize Groq client (cloud-based, ultra-fast LLM)
         this.groqApiKey = process.env.GROQ_API_KEY;
         this.modelName = process.env.GROQ_MODEL || 'llama-3.1-70b-versatile';
-        
+
         this.groq = this.groqApiKey ? new Groq({
             apiKey: this.groqApiKey,
         }) : null;
@@ -24,7 +24,7 @@ class EmergencyDecisionAgent {
 
         // Check if Groq is available
         this.groqAvailable = !!this.groqApiKey;
-        
+
         if (this.groqAvailable) {
             console.log(`✅ Groq AI enabled with model: ${this.modelName}`);
         } else {
@@ -72,14 +72,14 @@ class EmergencyDecisionAgent {
 
         try {
             console.log(`🤖 Testing Groq connection with model: ${this.modelName}...`);
-            
+
             const testResponse = await this.groq.chat.completions.create({
                 messages: [{ role: 'user', content: 'Test connection. Respond with "OK"' }],
                 model: this.modelName,
                 max_tokens: 10,
                 temperature: 0
             });
-            
+
             if (testResponse && testResponse.choices && testResponse.choices[0]) {
                 console.log(`✅ Groq connection successful`);
                 return true;
@@ -104,13 +104,13 @@ class EmergencyDecisionAgent {
 
             // Step 1: Scan available inventory
             const inventoryAnalysis = await this.scanInventory(bertAnalysis.disaster.type, bertAnalysis.severity);
-            
+
             // Step 2: Assess emergency context
             const contextAnalysis = await this.assessEmergencyContext(emergencyData, bertAnalysis);
-            
+
             // Step 3: Make LangChain-powered decision
             const decision = await this.generateDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis);
-            
+
             // Step 4: If dispatch approved, execute it
             if (decision.shouldDispatch && decision.confidence > 0.7) {
                 const dispatchResult = await this.executeDispatch(emergencyData.emergencyId, decision.dispatchPlan);
@@ -145,7 +145,7 @@ class EmergencyDecisionAgent {
         try {
             // Get resource requirements based on disaster type
             const requiredResources = this.emergencyResourceMap[disasterType] || this.emergencyResourceMap.general;
-            
+
             // Scan inventory for matching items with timeout
             const availableItems = await InventoryItem.find({
                 currentStock: { $gt: 0 }
@@ -180,7 +180,7 @@ class EmergencyDecisionAgent {
             ];
 
             for (const resourceType of allRequiredResources) {
-                const matchingItems = availableItems.filter(item => 
+                const matchingItems = availableItems.filter(item =>
                     this.matchResourceToItem(resourceType, item.name, item.category)
                 );
 
@@ -203,7 +203,7 @@ class EmergencyDecisionAgent {
             }
 
             // Calculate total available value
-            inventoryAnalysis.totalValue = availableItems.reduce((sum, item) => 
+            inventoryAnalysis.totalValue = availableItems.reduce((sum, item) =>
                 sum + ((item.currentStock || 0) * (item.cost || 0)), 0
             );
 
@@ -212,8 +212,8 @@ class EmergencyDecisionAgent {
         } catch (error) {
             console.error("❌ Inventory scan error:", error);
             // Return empty inventory analysis on error - no mock data
-            return { 
-                error: error.message, 
+            return {
+                error: error.message,
                 totalItems: 0,
                 availableByCategory: {},
                 resourceMatches: [],
@@ -317,9 +317,9 @@ Respond with a JSON object containing:
                     temperature: 0.3,
                     response_format: { type: "json_object" }
                 });
-                
+
                 const responseText = response.choices[0].message.content;
-                
+
                 try {
                     const decision = JSON.parse(responseText);
                     console.log(`🤖 Groq AI decision: ${decision.shouldDispatch ? 'DISPATCH' : 'NO DISPATCH'} (confidence: ${Math.round(decision.confidence * 100)}%)`);
@@ -348,12 +348,12 @@ Respond with a JSON object containing:
         const confidence = bertAnalysis?.disaster?.confidence || 0.5;
         const severity = bertAnalysis?.severity || 'medium';
         const urgencyScore = contextAnalysis?.urgencyScore || 5;
-        
-        // Decision logic
+
+        // Decision logic - HIGH+ severity gets automatic dispatch, MEDIUM/LOW gets manual request
         const shouldDispatch = (
-            confidence > 0.8 && 
             (severity === 'critical' || severity === 'high') &&
-            urgencyScore >= 7 &&
+            confidence > 0.7 &&
+            urgencyScore >= 6 &&
             inventoryAnalysis.resourceMatches.length > 0
         );
 
@@ -366,7 +366,7 @@ Respond with a JSON object containing:
                 if (match.matchingItems && match.matchingItems.length > 0) {
                     const item = match.matchingItems[0]; // Take first available item
                     const quantity = this.calculateOptimalQuantity(item, severity, contextAnalysis?.estimatedAffectedPopulation || 50);
-                    
+
                     if (quantity > 0 && quantity <= (item.currentStock || 0)) {
                         resourceAllocations.push({
                             itemId: item.id || 'unknown',
@@ -416,7 +416,7 @@ Respond with a JSON object containing:
                 if (item && item.currentStock >= allocation.quantity) {
                     item.currentStock -= allocation.quantity;
                     await item.save();
-                    
+
                     dispatchResults.push({
                         itemName: allocation.itemName,
                         quantity: allocation.quantity,
@@ -455,7 +455,7 @@ Respond with a JSON object containing:
                     estimatedArrival: dispatchPlan.estimatedResponseTime?.estimatedArrival || new Date(Date.now() + (dispatchPlan.estimatedResponseTime?.minutes || 30) * 60000),
                     deliveryNotes: "Autonomous dispatch by AI Emergency Decision Agent"
                 };
-                
+
                 emergency.timeline.push({
                     status: 'dispatched',
                     timestamp: new Date(),
@@ -464,6 +464,10 @@ Respond with a JSON object containing:
 
                 await emergency.save();
             }
+
+            // Notify Team
+            const NotificationService = (await import('./notificationService.js')).default;
+            await NotificationService.notifyDispatchTeam(dispatchPlan);
 
             return {
                 success: true,
@@ -485,33 +489,33 @@ Respond with a JSON object containing:
     matchResourceToItem(resourceType, itemName, category) {
         const resourceLower = resourceType.toLowerCase().replace(/_/g, ' ');
         const itemLower = itemName.toLowerCase();
-        
-        return itemLower.includes(resourceLower) || 
-               resourceLower.includes(itemLower.split(' ')[0]) ||
-               (resourceType.includes('medical') && category === 'Medical') ||
-               (resourceType.includes('food') && category === 'Food') ||
-               (resourceType.includes('water') && category === 'Water') ||
-               (resourceType.includes('shelter') && category === 'Shelter') ||
-               (resourceType.includes('equipment') && category === 'Equipment');
+
+        return itemLower.includes(resourceLower) ||
+            resourceLower.includes(itemLower.split(' ')[0]) ||
+            (resourceType.includes('medical') && category === 'Medical') ||
+            (resourceType.includes('food') && category === 'Food') ||
+            (resourceType.includes('water') && category === 'Water') ||
+            (resourceType.includes('shelter') && category === 'Shelter') ||
+            (resourceType.includes('equipment') && category === 'Equipment');
     }
 
     calculateUrgencyScore(bertAnalysis) {
         let score = 5; // Base score
-        
+
         // Severity impact
         if (bertAnalysis?.severity === 'critical') score += 3;
         else if (bertAnalysis?.severity === 'high') score += 2;
         else if (bertAnalysis?.severity === 'medium') score += 1;
-        
+
         // Sentiment impact
         if (bertAnalysis?.sentiment?.urgency === 'critical') score += 2;
         else if (bertAnalysis?.sentiment?.urgency === 'high') score += 1;
-        
+
         // Confidence impact
         if (bertAnalysis?.disaster?.confidence) {
             score += bertAnalysis.disaster.confidence * 2;
         }
-        
+
         return Math.min(Math.round(score), 10);
     }
 
@@ -540,31 +544,31 @@ Respond with a JSON object containing:
             'medical': 10,
             'general': 25
         };
-        
+
         const multiplier = {
             'critical': 4,
             'high': 3,
             'medium': 2,
             'low': 1
         };
-        
+
         const disasterType = bertAnalysis?.disaster?.type || 'general';
         const severity = bertAnalysis?.severity || 'medium';
-        
+
         const base = basePopulation[disasterType] || basePopulation.general;
         const mult = multiplier[severity] || 1;
-        
+
         return base * mult;
     }
 
     calculateOptimalQuantity(item, severity, affectedPopulation) {
         // Calculate optimal quantity based on item type, severity, and affected population
         let baseQuantity = Math.ceil(affectedPopulation / 10); // Base ratio
-        
+
         // Adjust based on severity
         if (severity === 'critical') baseQuantity *= 2;
         else if (severity === 'high') baseQuantity *= 1.5;
-        
+
         // Ensure we don't exceed available stock
         return Math.min(baseQuantity, item.currentStock, Math.floor(item.currentStock * 0.8));
     }
@@ -573,7 +577,7 @@ Respond with a JSON object containing:
         try {
             // Find the nearest response center with available resources
             const nearestCenter = await this.findNearestResponseCenter(emergencyData.location, inventoryAnalysis);
-            
+
             if (!nearestCenter) {
                 console.warn('⚠️ No response center found, using fallback calculation');
                 return this.getFallbackResponseTime(contextAnalysis);
@@ -613,7 +617,7 @@ Respond with a JSON object containing:
         try {
             // Get realistic response centers from timing service
             const responseCenters = await this.timingService.getRealisticResponseCenters();
-            
+
             // Calculate distances and find nearest with resources
             let nearestCenter = null;
             let minDistance = Infinity;
@@ -625,7 +629,7 @@ Respond with a JSON object containing:
                 );
 
                 // Check if this center has resources (from inventory analysis)
-                const hasResources = inventoryAnalysis.resourceMatches?.some(match => 
+                const hasResources = inventoryAnalysis.resourceMatches?.some(match =>
                     match.matchingItems?.length > 0
                 );
 
@@ -674,16 +678,16 @@ Respond with a JSON object containing:
      */
     getFallbackResponseTime(contextAnalysis) {
         let baseTime = 30; // 30 minutes base
-        
+
         // Adjust based on urgency
         if (contextAnalysis?.urgencyScore >= 9) baseTime = 15;
         else if (contextAnalysis?.urgencyScore >= 7) baseTime = 20;
-        
+
         // Time of day adjustment
         if (contextAnalysis?.timeOfDay < 6 || contextAnalysis?.timeOfDay > 22) {
             baseTime += 10; // Night time delay
         }
-        
+
         return {
             minutes: baseTime,
             confidence: 'low',

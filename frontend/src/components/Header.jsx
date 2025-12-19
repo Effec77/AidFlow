@@ -106,8 +106,8 @@ const Header = () => {
                   {canAccessRoute(userRole, '/volunteer') && (
                     <Link to="/volunteer" className="dropdown-item">🤝 Volunteer Portal</Link>
                   )}
-                  {canAccessRoute(userRole, '/recipient') && (
-                    <Link to="/recipient" className="dropdown-item">📋 Request Portal</Link>
+                  {canAccessRoute(userRole, '/refugee') && (
+                    <Link to="/refugee" className="dropdown-item">📋 Refugee Portal</Link>
                   )}
                   {canAccessRoute(userRole, '/analytics') && (
                     <Link to="/analytics" className="dropdown-item">📈 Analytics</Link>

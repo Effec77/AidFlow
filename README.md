@@ -557,8 +557,8 @@ The system seeds with default users for testing:
 
 ### Short Term (Q1 2025)
 - [ ] Mobile app (React Native)
-- [ ] SMS/Email notifications
-- [ ] Weather API integration
+- [x] SMS/Email notifications (Integrated via NotificationService)
+- [x] Weather API integration (Integrated via WeatherService)
 - [ ] Multi-language support (i18n)
 - [ ] Advanced analytics dashboard
 

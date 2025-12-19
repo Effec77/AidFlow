@@ -78,12 +78,12 @@ const RecipientPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!userId) {
       setError("User authentication required. Please log in again.");
       return;
     }
-    
+
     if (formData.quantity <= 0) {
       setError("Quantity must be greater than zero");
       return;
@@ -114,6 +114,16 @@ const RecipientPage = () => {
       setError(`Submission failed: ${err.message}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'text-green-600';
+      case 'rejected': return 'text-red-600';
+      case 'delivered': return 'text-blue-600';
+      case 'fulfilled': return 'text-purple-600';
+      default: return 'text-yellow-600';
     }
   };
 
@@ -200,7 +210,11 @@ const RecipientPage = () => {
                   <td>{req.category}</td>
                   <td>{req.quantity}</td>
                   <td>{req.location}</td>
-                  <td className={`status-tag ${req.status}`}>{req.status}</td>
+                  <td>
+                    <span className={getStatusColor(req.status)}>
+                      {req.status}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

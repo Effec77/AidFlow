@@ -22,7 +22,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 // 🏗️ Dashboard / Role Pages
 import InventoryPage from "./components/InventoryPage.jsx";   // Admin
 import VolunteerPage from "./components/VolunteerPage.jsx";   // Volunteer
-import RecipientPage from "./components/RecipientPage.jsx";   // Recipient
+import RefugeePage from "./components/RefugeePage.jsx";       // Refugee
 import ReliefAnalytics from "./components/ReliefAnalytics.jsx"; // Analytics
 import EmergencyRequest from "./components/EmergencyRequest.jsx"; // Emergency Request
 import EmergencyDashboard from "./components/EmergencyDashboard.jsx"; // Emergency Dashboard
@@ -164,12 +164,12 @@ function AppContent() {
             } 
           />
 
-          {/* Recipient/Affected Citizen Dashboard */}
+          {/* Refugee Dashboard */}
           <Route 
-            path="/recipient" 
+            path="/refugee" 
             element={
-              <ProtectedRoute requiredRole={['affected citizen', 'admin']}>
-                <RecipientPage />
+              <ProtectedRoute requiredRole={['refugee', 'admin']}>
+                <RefugeePage />
               </ProtectedRoute>
             } 
           />

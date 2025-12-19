@@ -2,6 +2,7 @@ import express from 'express';
 import EmergencyAIAgent from '../services/aiAgent.js';
 import EmergencyDecisionAgent from '../services/emergencyDecisionAgent.js';
 import Emergency from '../models/Emergency.js';
+import DispatchRequest from '../models/DispatchRequest.js';
 import { InventoryItem } from '../models/Inventory.js';
 import mongoose from 'mongoose'; // Import mongoose
 
@@ -79,9 +80,14 @@ router.post('/request', async (req, res) => {
 
         console.log(`✅ Decision Agent Result: Dispatch=${decisionResult.shouldDispatch}, Confidence=${decisionResult.confidence}`);
 
-        // Update inventory (reserve resources if not auto-dispatched)
-        if (!decisionResult.dispatchExecuted) {
-            await reserveResources(aiResponse.response.resources);
+        // Handle inventory based on severity and dispatch decision
+        if (decisionResult.dispatchExecuted) {
+            // High+ severity: Inventory automatically updated during automatic dispatch
+            console.log(`✅ Inventory automatically updated for high severity emergency`);
+        } else {
+            // Medium/Low severity: Create dispatch request and reserve resources
+            console.log(`📋 Creating dispatch request for medium/low severity emergency`);
+            await createDispatchRequest(aiResponse.emergencyId, aiResponse.analysis, aiResponse.response.resources);
         }
 
         res.status(201).json({
@@ -255,6 +261,66 @@ router.get('/analytics', async (req, res) => {
         res.status(500).json({ error: 'Failed to get emergency analytics' });
     }
 });
+
+// Helper function to create dispatch request for medium/low severity emergencies
+async function createDispatchRequest(emergencyId, analysis, resourcePlan) {
+    try {
+        const severity = analysis?.severity || 'medium';
+        const requestedResources = [];
+        
+        // Convert resource plan to structured format
+        const immediate = resourcePlan?.immediate || [];
+        const secondary = resourcePlan?.secondary || [];
+        const allResources = [...immediate, ...secondary];
+        
+        for (const resourceName of allResources) {
+            const quantity = resourcePlan?.quantities?.[resourceName] || 1;
+            requestedResources.push({
+                name: resourceName,
+                quantity: quantity,
+                category: mapResourceToCategory(resourceName)
+            });
+        }
+        
+        const dispatchRequest = new DispatchRequest({
+            emergencyId: emergencyId,
+            severity: severity,
+            requestedResources: requestedResources,
+            status: 'pending',
+            priority: severity === 'medium' ? 'medium' : 'low',
+            reasoning: `${severity} severity emergency requires manual approval for dispatch`,
+            notes: `AI analysis confidence: ${analysis?.disaster?.confidence || 'unknown'}`
+        });
+        
+        await dispatchRequest.save();
+        console.log(`📋 Dispatch request created for emergency ${emergencyId}`);
+        
+        // Reserve resources temporarily
+        await reserveResources(resourcePlan);
+        
+    } catch (error) {
+        console.error('❌ Failed to create dispatch request:', error.message);
+    }
+}
+
+// Helper function to map resource names to categories
+function mapResourceToCategory(resourceName) {
+    const categoryMap = {
+        'medical': 'Medical',
+        'food': 'Food', 
+        'water': 'Water',
+        'shelter': 'Shelter',
+        'equipment': 'Equipment'
+    };
+    
+    const lowerName = resourceName.toLowerCase();
+    for (const [key, category] of Object.entries(categoryMap)) {
+        if (lowerName.includes(key)) {
+            return category;
+        }
+    }
+    return 'Equipment'; // Default category
+}
 
 // Helper function to reserve resources
 async function reserveResources(resourcePlan) {
@@ -528,9 +594,14 @@ router.post('/public-request', async (req, res) => {
 
         console.log(`✅ Decision Agent Result: Dispatch=${decisionResult.shouldDispatch}, Confidence=${decisionResult.confidence}`);
 
-        // Update inventory (reserve resources if not auto-dispatched)
-        if (!decisionResult.dispatchExecuted) {
-            await reserveResources(aiResponse.response.resources);
+        // Handle inventory based on severity and dispatch decision
+        if (decisionResult.dispatchExecuted) {
+            // High+ severity: Inventory automatically updated during automatic dispatch
+            console.log(`✅ Inventory automatically updated for high severity emergency`);
+        } else {
+            // Medium/Low severity: Create dispatch request and reserve resources
+            console.log(`📋 Creating dispatch request for medium/low severity emergency`);
+            await createDispatchRequest(aiResponse.emergencyId, aiResponse.analysis, aiResponse.response.resources);
         }
 
         res.status(201).json({
@@ -556,6 +627,113 @@ router.post('/public-request', async (req, res) => {
         res.status(500).json({
             error: 'Failed to process emergency request',
             details: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/emergency/dispatch-requests
+ * Get all pending dispatch requests for admin approval
+ */
+router.get('/dispatch-requests', async (req, res) => {
+    try {
+        const requests = await DispatchRequest.find({
+            status: 'pending'
+        }).sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            count: requests.length,
+            requests: requests
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * PUT /api/emergency/dispatch-requests/:id/approve
+ * Approve a dispatch request and execute dispatch
+ */
+router.put('/dispatch-requests/:id/approve', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { adminId, notes } = req.body;
+
+        console.log(`🔍 Approving dispatch request ${id} by admin ${adminId}`);
+
+        const request = await DispatchRequest.findById(id);
+        if (!request) {
+            console.log(`❌ Dispatch request ${id} not found`);
+            return res.status(404).json({ error: 'Dispatch request not found' });
+        }
+
+        console.log(`📋 Found dispatch request for emergency: ${request.emergencyId}`);
+
+        // Update request status
+        request.status = 'approved';
+        request.approvedBy = mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
+        request.approvedAt = new Date();
+        request.notes = notes || 'Approved by admin';
+        await request.save();
+
+        // Execute dispatch
+        const DispatchService = (await import('../services/dispatchService.js')).default;
+        const dispatchService = new DispatchService();
+        const dispatchResult = await dispatchService.dispatchEmergency(request.emergencyId, 
+            mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : new mongoose.Types.ObjectId());
+
+        res.json({
+            success: true,
+            message: 'Dispatch request approved and executed',
+            request: request,
+            dispatchResult: dispatchResult
+        });
+
+    } catch (error) {
+        console.error('❌ Dispatch request approval error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            details: error.stack
+        });
+    }
+});
+
+/**
+ * PUT /api/emergency/dispatch-requests/:id/reject
+ * Reject a dispatch request
+ */
+router.put('/dispatch-requests/:id/reject', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { adminId, reason } = req.body;
+
+        const request = await DispatchRequest.findById(id);
+        if (!request) {
+            return res.status(404).json({ error: 'Dispatch request not found' });
+        }
+
+        request.status = 'rejected';
+        request.approvedBy = mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
+        request.approvedAt = new Date();
+        request.notes = reason || 'Rejected by admin';
+        await request.save();
+
+        res.json({
+            success: true,
+            message: 'Dispatch request rejected',
+            request: request
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
         });
     }
 });

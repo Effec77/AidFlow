@@ -5,9 +5,6 @@ import {
   Bar,
   LineChart,
   Line,
-  PieChart,
-  Pie,
-  Cell,
   Tooltip,
   XAxis,
   YAxis,
@@ -17,65 +14,41 @@ import {
 import "../css/ReliefAnalytics.css";
 
 const ReliefAnalytics = ({ fundData, volunteerData, providerData }) => {
-  const COLORS = ["#2563eb", "#10b981", "#f59e0b", "#ef4444"];
-
-  const pieData = [
-    { name: "Funds", value: fundData?.total || 0 },
-    { name: "Volunteers", value: volunteerData?.total || 0 },
-    { name: "Providers", value: providerData?.total || 0 },
-  ];
-
   const trendData = fundData?.monthlyTrends || [
     { month: "Jan", funds: 200, volunteers: 40, providers: 15 },
     { month: "Feb", funds: 350, volunteers: 55, providers: 22 },
     { month: "Mar", funds: 450, volunteers: 70, providers: 30 },
   ];
 
+  // Explicit colors for Recharts SVG elements (Light Mode)
+  const TEXT_MUTED = "#6B7280"; // Cool Gray 500
+  const TEXT_MAIN = "#111827";   // Gray 900
+  const BORDER_LIGHT = "#E5E7EB"; // Gray 200
+  const BG_CARD = "#FFFFFF";
+
   return (
     <div className="relief-analytics-section">
-      <h2 className="analytics-title">Relief Fund Analytics</h2>
+      <h2 className="analytics-title">Relief Analytics</h2>
       <p className="analytics-subtitle">
         Visual overview of relief operations and contributions.
       </p>
 
       <div className="analytics-grid">
-        {/* ===== Pie Chart ===== */}
-        <div className="analytics-card">
-          <h3>Overall Distribution</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={90}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, value }) => `${name}: ${value}`}
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
         {/* ===== Bar Chart ===== */}
         <div className="analytics-card">
           <h3>Monthly Funds vs Volunteers</h3>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="funds" fill="#2563eb" />
-              <Bar dataKey="volunteers" fill="#10b981" />
+            <BarChart data={trendData} barGap={8}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={BORDER_LIGHT} opacity={0.3} />
+              <XAxis dataKey="month" tick={{ fill: TEXT_MUTED }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: TEXT_MUTED }} axisLine={false} tickLine={false} />
+              <Tooltip
+                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                contentStyle={{ backgroundColor: BG_CARD, borderColor: BORDER_LIGHT, color: TEXT_MAIN }}
+              />
+              <Legend wrapperStyle={{ paddingTop: '10px' }} />
+              <Bar dataKey="funds" fill="#60A5FA" radius={[4, 4, 0, 0]} barSize={32} name="Funds" />
+              <Bar dataKey="volunteers" fill="#34D399" radius={[4, 4, 0, 0]} barSize={32} name="Volunteers" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -85,14 +58,16 @@ const ReliefAnalytics = ({ fundData, volunteerData, providerData }) => {
           <h3>Funds, Volunteers & Providers Over Time</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="funds" stroke="#2563eb" strokeWidth={2} />
-              <Line type="monotone" dataKey="volunteers" stroke="#10b981" strokeWidth={2} />
-              <Line type="monotone" dataKey="providers" stroke="#f59e0b" strokeWidth={2} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={BORDER_LIGHT} opacity={0.3} />
+              <XAxis dataKey="month" tick={{ fill: TEXT_MUTED }} axisLine={{ stroke: BORDER_LIGHT, opacity: 0.3 }} tickLine={false} dy={10} />
+              <YAxis tick={{ fill: TEXT_MUTED }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ backgroundColor: BG_CARD, borderColor: BORDER_LIGHT, color: TEXT_MAIN }}
+              />
+              <Legend wrapperStyle={{ paddingTop: '10px' }} />
+              <Line type="monotone" dataKey="funds" stroke="#60A5FA" strokeWidth={3} dot={{ r: 4, fill: '#60A5FA', strokeWidth: 0 }} activeDot={{ r: 7 }} name="Funds" />
+              <Line type="monotone" dataKey="volunteers" stroke="#34D399" strokeWidth={3} dot={{ r: 4, fill: '#34D399', strokeWidth: 0 }} activeDot={{ r: 7 }} name="Volunteers" />
+              <Line type="monotone" dataKey="providers" stroke="#FBBF24" strokeWidth={3} dot={{ r: 4, fill: '#FBBF24', strokeWidth: 0 }} activeDot={{ r: 7 }} name="Providers" />
             </LineChart>
           </ResponsiveContainer>
         </div>

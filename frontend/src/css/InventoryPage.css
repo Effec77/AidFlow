@@ -1,431 +1,267 @@
 /* =========================================================
-   🌐 GENERAL STYLES (Shared Across Light & Dark Modes)
+   📦 DASHBOARD & INVENTORY STYLES
+   Refactored for Industry Standard Design System
    ========================================================= */
 
-/* =========================================================
-   🎨 GENERAL STYLES
-   ========================================================= */
+/* Main Container */
 .inventory-page {
-  padding: 100px 80px 40px;
-  /* Added top padding for fixed header */
-  background-color: var(--secondary-bg, #f9fafb);
-  color: var(--text-color, #111);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  animation: fadeIn 0.4s ease-out;
 }
 
-.subtitle {
-  color: #555;
-  margin-bottom: 2rem;
-}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-.status {
-  margin: 10px 0;
-  padding: 12px 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.status.loading {
-  background: #e7f0ff;
-  color: #004aad;
-}
-
-.status.error {
-  background: #ffeaea;
-  color: #b91c1c;
-}
-
-.status.success {
-  background: #ecfdf5;
-  color: #065f46;
-}
-
-.spin {
-  animation: spin 1.2s linear infinite;
-}
-
-@keyframes spin {
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* ---------------- Form Section ---------------- */
-.inventory-form-section {
-  background: var(--primary-bg, #fff);
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  margin-bottom: 40px;
-  transition: all 0.3s ease;
+.subtitle {
+  color: var(--text-muted);
+  font-size: 1.125rem;
+  margin-bottom: 2.5rem;
+  max-width: 600px;
 }
 
-.inventory-form .form-grid {
+/* ============================
+   📝 FORM SECTIONS
+   ============================ */
+.inventory-form-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal);
+}
+
+.inventory-form-section:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.inventory-form-section h2 {
+  margin-bottom: 1.5rem;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 1rem;
+}
+
+.form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 }
 
 .form-group label {
+  font-size: 0.875rem;
   font-weight: 600;
-  margin-bottom: 6px;
-  color: var(--label-color, #222);
+  color: var(--text-main);
 }
 
-.form-group input,
-.form-group select {
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: var(--input-bg, #fff);
-  color: var(--input-text, #111);
-  transition: all 0.2s ease;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-  outline: none;
-}
-
-/* ---------------- Buttons ---------------- */
 .form-buttons {
-  margin-top: 20px;
+  margin-top: 2rem;
   display: flex;
-  gap: 10px;
+  gap: 1rem;
+  justify-content: flex-end;
 }
 
-.btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.btn.primary {
-  background-color: #2563eb;
-  color: white;
-}
-
-.btn.primary:hover {
-  background-color: #1d4ed8;
-}
-
-.btn.secondary {
-  background-color: #f3f4f6;
-  color: #111;
-}
-
-.btn.secondary:hover {
-  background-color: #e5e7eb;
-}
-
-/* ---------------- Table Section ---------------- */
+/* ============================
+   📊 DATA TABLES
+   ============================ */
 .inventory-table-section {
-  background: #fff;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 0;
+  /* Remove padding for edge-to-edge table */
+  overflow: hidden;
+  /* For rounded corners */
+  box-shadow: var(--shadow-sm);
+}
+
+.inventory-table-section h2 {
+  padding: 1.5rem 2rem;
+  margin: 0;
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .inventory-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
-}
-
-.inventory-table th,
-.inventory-table td {
-  text-align: left;
-  padding: 12px 10px;
-  border-bottom: 1px solid #ddd;
+  font-size: 0.95rem;
 }
 
 .inventory-table th {
-  font-weight: 700;
-  color: #333;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 1rem 1.5rem;
+  text-align: left;
 }
 
+.inventory-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-main);
+  transition: background-color var(--transition-fast);
+}
+
+.inventory-table tr:last-child td {
+  border-bottom: none;
+}
+
+.inventory-table tr:hover td {
+  background-color: var(--bg-hover);
+}
+
+/* ============================
+   🏷️ STATUS & ALERTS
+   ============================ */
+.status {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.status.success {
+  background: var(--success-50);
+  color: var(--success-700);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.status.error {
+  background: var(--danger-50);
+  color: var(--danger-700);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.status.loading {
+  background: var(--primary-50);
+  color: var(--primary-700);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Table Actions */
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 0.75rem;
 }
 
 .icon-btn {
+  background: transparent;
   border: none;
-  background: none;
   cursor: pointer;
-  color: #2563eb;
-  transition: transform 0.2s ease;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  color: var(--slate-400);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon-btn:hover {
-  transform: scale(1.15);
-  color: #1d4ed8;
+  color: var(--primary-500);
+  background: var(--primary-50);
 }
 
-/* ---------------- Modal ---------------- */
+/* ============================
+   🪟 MODALS
+   ============================ */
 .modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.35);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .transaction-modal {
-  background: #fff;
-  padding: 25px;
-  border-radius: 10px;
-  width: 380px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-light);
+  transform-origin: center;
+  animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.transaction-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.transaction-modal h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.transaction-modal p {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
 }
 
 .modal-buttons {
+  margin-top: 2rem;
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 15px;
+  gap: 0.75rem;
 }
 
-.no-data {
-  text-align: center;
-  padding: 20px;
-  color: #555;
-}
+/* ============================
+   📱 RESPONSIVE
+   ============================ */
+@media (max-width: 768px) {
+  .inventory-page {
+    padding: 1rem;
+  }
 
-/* =========================================================
-     ☀️ LIGHT MODE STYLES
-     ========================================================= */
-body.light .inventory-page {
-  background-color: #f9fafb;
-  color: #111;
-}
+  .inventory-table-section {
+    overflow-x: auto;
+  }
 
-body.light .inventory-form-section,
-body.light .inventory-table-section,
-body.light .transaction-modal {
-  background-color: #fff;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
+  .form-buttons {
+    flex-direction: column;
+  }
 
-body.light .form-group label {
-  color: #333;
-}
-
-body.light .form-group input,
-body.light .form-group select {
-  background: #fff;
-  color: #111;
-  border: 1px solid #ccc;
-}
-
-body.light .btn.primary {
-  background-color: #2563eb;
-  color: #fff;
-}
-
-body.light .btn.primary:hover {
-  background-color: #1d4ed8;
-}
-
-body.light .btn.secondary {
-  background-color: #f3f4f6;
-  color: #111;
-}
-
-body.light .btn.secondary:hover {
-  background-color: #e5e7eb;
-}
-
-body.light .icon-btn {
-  color: #2563eb;
-}
-
-body.light .icon-btn:hover {
-  color: #1d4ed8;
-}
-
-body.light .status.loading {
-  background: #e7f0ff;
-  color: #004aad;
-}
-
-body.light .status.error {
-  background: #ffeaea;
-  color: #b91c1c;
-}
-
-body.light .status.success {
-  background: #ecfdf5;
-  color: #065f46;
-}
-
-body.light .form-group select {
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #1e293b;
-  /* Dark readable text */
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 1rem;
-  appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #2563eb 50%),
-    linear-gradient(135deg, #2563eb 50%, transparent 50%);
-  background-position: calc(100% - 20px) calc(50% - 2px),
-    calc(100% - 15px) calc(50% - 2px);
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 30px;
-  transition: all 0.3s ease-in-out;
-}
-
-body.light .form-group select option {
-  background-color: #f9fafb;
-  /* Light dropdown background */
-  color: #1e293b;
-}
-
-body.light .form-group select:hover,
-body.light .form-group select:focus {
-  border-color: #2563eb;
-  background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
-  outline: none;
-}
-
-/* =========================================================
-     🌙 DARK MODE STYLES
-     ========================================================= */
-body.dark .inventory-page {
-  background: linear-gradient(180deg, #0e1116 0%, #111827 100%);
-  color: #f5f5f5;
-}
-
-body.dark .inventory-form-section,
-body.dark .inventory-table-section,
-body.dark .transaction-modal {
-  background: rgba(25, 25, 35, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-}
-
-body.dark .form-group label {
-  color: #e5e7eb;
-}
-
-body.dark .form-group input,
-body.dark .form-group select {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f9fafb;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-body.dark .form-group input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-body.dark .btn.primary {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
-}
-
-body.dark .btn.primary:hover {
-  background: linear-gradient(135deg, #2563eb, #1e40af);
-}
-
-body.dark .btn.secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f9fafb;
-}
-
-body.dark .btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-body.dark .icon-btn {
-  color: #60a5fa;
-}
-
-body.dark .icon-btn:hover {
-  color: #3b82f6;
-}
-
-body.dark .inventory-table th,
-body.dark .inventory-table td {
-  color: #f5f5f5;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-body.dark .status.loading {
-  background: rgba(59, 130, 246, 0.15);
-  color: #93c5fd;
-}
-
-body.dark .status.error {
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-}
-
-body.dark .status.success {
-  background: rgba(16, 185, 129, 0.15);
-  color: #6ee7b7;
-}
-
-/* 🩶 FIX: Dropdown visibility in dark mode */
-body.dark .form-group select {
-  background-color: rgba(255, 255, 255, 0.1);
-  /* Subtle glass effect */
-  color: #f9fafb;
-  /* Readable text */
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 1rem;
-  appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #93c5fd 50%),
-    linear-gradient(135deg, #93c5fd 50%, transparent 50%);
-  background-position: calc(100% - 20px) calc(50% - 2px),
-    calc(100% - 15px) calc(50% - 2px);
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 30px;
-  transition: all 0.3s ease-in-out;
-}
-
-body.dark .form-group select option {
-  background-color: #1f2937;
-  /* Dropdown list background */
-  color: #f9fafb;
-  /* Option text */
-}
-
-body.dark .form-group select:hover,
-body.dark .form-group select:focus {
-  border-color: #3b82f6;
-  /* Blue highlight */
-  background-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-  outline: none;
+  .btn {
+    width: 100%;
+  }
 }

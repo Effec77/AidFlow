@@ -69,7 +69,7 @@ const Register = () => {
       })
     );
 
-    // Ensure role is set and valid (only 'volunteer' or 'affected citizen' allowed)
+    // Ensure role is set and valid (only 'volunteer' or 'refugee' allowed)
     if (!dataToSend.role) {
       dataToSend.role = 'volunteer'; // Default role
     }
@@ -78,9 +78,9 @@ const Register = () => {
     dataToSend.role = dataToSend.role.toLowerCase().trim();
     
     // Frontend validation: Only allow public registration for these roles
-    const allowedRoles = ['volunteer', 'affected citizen'];
+    const allowedRoles = ['volunteer', 'refugee'];
     if (!allowedRoles.includes(dataToSend.role)) {
-      setStatus('Error: Invalid role selected. Please choose Volunteer or Affected Citizen.');
+      setStatus('Error: Invalid role selected. Please choose Volunteer or Refugee.');
       setLoading(false);
       return;
     }
@@ -100,8 +100,8 @@ const Register = () => {
 
         // Redirect based on role (using RBAC route access)
         const normalizedRole = result.role?.toLowerCase();
-        if (normalizedRole === 'affected citizen') {
-          navigate('/recipient');
+        if (normalizedRole === 'refugee') {
+          navigate('/refugee');
         } else if (normalizedRole === 'volunteer') {
           navigate('/volunteer');
         } else {
@@ -195,7 +195,7 @@ const Register = () => {
                 className="form-field full-width-field"
               >
                 <option value="volunteer">Register as Volunteer/Organization</option>
-                <option value="affected citizen">Register as Affected Citizen</option>
+                <option value="refugee">Register as Refugee</option>
               </select>
             </div>
 
@@ -276,7 +276,7 @@ const Register = () => {
           </div>
 
           {/* Skills shown only for volunteers */}
-          {formData.role !== 'affected citizen' && (
+          {formData.role !== 'refugee' && (
             <div className="volunteer-skills-group">
               <label>What can you do?</label>
               <div className="checkbox-group">

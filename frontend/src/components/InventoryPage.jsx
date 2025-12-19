@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { PlusCircle, Edit, Package, Loader, XCircle, Send, Inbox } from 'lucide-react';
+import { PlusCircle, Edit, Package, Loader, XCircle } from 'lucide-react';
 import '../css/InventoryPage.css';
 import RoleToggle from "../components/RoleToggle";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +40,7 @@ const InventoryPage = () => {
   const { token, userRole } = useContext(UserContext);
 
   const navigate = useNavigate();
-  
+
   // Check if user can manage inventory (admin, branch manager)
   const canManageInventory = hasRole(userRole, ['admin', 'branch manager']);
 
@@ -205,6 +205,8 @@ const InventoryPage = () => {
       <h1>Supply Chain Dashboard Overview</h1>
       <p className="subtitle">Centralized management for all disaster relief inventory.</p>
 
+
+
       {isLoading && <div className="status loading"><Loader className="spin" /> Loading...</div>}
       {error && <div className="status error"><XCircle /> {error}</div>}
       {message && !error && <div className="status success">{message}</div>}
@@ -213,26 +215,26 @@ const InventoryPage = () => {
         <section className="inventory-form-section">
           <h2>{isEditing ? 'Edit Inventory Item' : 'Add New Inventory Item'}</h2>
           <form onSubmit={handleSubmit} className="inventory-form">
-          <div className="form-grid">
-            <FormInput id="name" label="Item Name" value={formData.name} onChange={handleChange} required />
-            <FormSelect id="category" label="Category" value={formData.category} onChange={handleChange} options={CATEGORIES} required />
-            <FormInput id="supplier" label="Supplier" value={formData.supplier} onChange={handleChange} required />
-            <FormInput id="currentStock" label="Current Stock" type="number" value={formData.currentStock} onChange={handleChange} required />
-            <FormInput id="unit" label="Unit" value={formData.unit} onChange={handleChange} required />
-            <FormInput id="location" label="Location" value={formData.location} onChange={handleChange} required />
-            <FormInput id="cost" label="Cost" type="number" value={formData.cost} onChange={handleChange} required />
-            <FormInput id="minThreshold" label="Min Threshold" type="number" value={formData.minThreshold} onChange={handleChange} />
-            <FormInput id="maxCapacity" label="Max Capacity" type="number" value={formData.maxCapacity} onChange={handleChange} />
-            <FormSelect id="status" label="Status" value={formData.status} onChange={handleChange} options={STATUSES} required />
-          </div>
+            <div className="form-grid">
+              <FormInput id="name" label="Item Name" value={formData.name} onChange={handleChange} required />
+              <FormSelect id="category" label="Category" value={formData.category} onChange={handleChange} options={CATEGORIES} required />
+              <FormInput id="supplier" label="Supplier" value={formData.supplier} onChange={handleChange} required />
+              <FormInput id="currentStock" label="Current Stock" type="number" value={formData.currentStock} onChange={handleChange} required />
+              <FormInput id="unit" label="Unit" value={formData.unit} onChange={handleChange} required />
+              <FormInput id="location" label="Location" value={formData.location} onChange={handleChange} required />
+              <FormInput id="cost" label="Cost" type="number" value={formData.cost} onChange={handleChange} required />
+              <FormInput id="minThreshold" label="Min Threshold" type="number" value={formData.minThreshold} onChange={handleChange} />
+              <FormInput id="maxCapacity" label="Max Capacity" type="number" value={formData.maxCapacity} onChange={handleChange} />
+              <FormSelect id="status" label="Status" value={formData.status} onChange={handleChange} options={STATUSES} required />
+            </div>
 
-          <div className="form-buttons">
-            <button type="submit" className="btn primary" disabled={isLoading}>
-              {isEditing ? 'Save Changes' : <><PlusCircle /> Add Item</>}
-            </button>
-            {isEditing && <button type="button" onClick={handleReset} className="btn secondary">Cancel Edit</button>}
-          </div>
-        </form>
+            <div className="form-buttons">
+              <button type="submit" className="btn primary" disabled={isLoading}>
+                {isEditing ? 'Save Changes' : <><PlusCircle /> Add Item</>}
+              </button>
+              {isEditing && <button type="button" onClick={handleReset} className="btn secondary">Cancel Edit</button>}
+            </div>
+          </form>
         </section>
       </PermissionGate>
 
@@ -319,7 +321,7 @@ const TransactionModal = ({ item, onConfirm, onCancel }) => {
           <div className="modal-buttons">
             <button type="button" onClick={onCancel} className="btn secondary">Cancel</button>
             <button type="submit" className="btn primary" disabled={quantity <= 0 || !counterparty}>
-              {isOutbound ? <Send size={16} /> : <Inbox size={16} />} Confirm
+              Confirm Transaction
             </button>
           </div>
         </form>
@@ -346,6 +348,6 @@ const FormSelect = ({ id, label, value, onChange, options, required = false }) =
 );
 
 const TableHeader = ({ title }) => <th>{title}</th>;
-const TableCell = ({ children }) => <td>{children}</td>;
+const TableCell = ({ children, ...props }) => <td {...props}>{children}</td>;
 
 export default InventoryPage;

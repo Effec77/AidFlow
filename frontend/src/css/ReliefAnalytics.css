@@ -1,164 +1,190 @@
 /* =========================================================
-   🌙 Relief Analytics Dashboard (Dark Mode Default)
+   🌙 Relief Analytics Dashboard
    ========================================================= */
 
 /* ----- Section Wrapper ----- */
 .relief-analytics-section {
-    margin-top: 3rem; /* header space */
-    padding: 2rem 1.5rem;
-    color: var(--text-color);
-    transition: all 0.5s ease;
-    font-family: "Lato", sans-serif;
+  /* No manual top margin needed, handled by App wrapper padding */
+  padding: 0 1.5rem 2rem 1.5rem;
+  color: var(--text-main);
+  transition: all 0.5s ease;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ----- Header (Matching Golden Style) ----- */
+.analytics-title {
+  text-align: center;
+  font-size: 3rem;
+  font-weight: 800;
+  color: #FFC107;
+  /* Gold */
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem 0;
+  font-family: "Montserrat", sans-serif;
+  animation: fadeInDown 0.8s ease;
+  text-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+}
+
+.analytics-subtitle {
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  margin-bottom: 3rem;
+  animation: fadeInUp 1s ease;
+  opacity: 0.9;
+}
+
+/* =========================================================
+    🎨 GRID LAYOUT
+    ========================================================= */
+.analytics-grid {
+  display: grid;
+  /* Force 2 columns on large screens */
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* ----- Card Styling ----- */
+/* ----- Card Styling (Matching Screenshot) ----- */
+.analytics-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  /* Slightly sharper radius as per image */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 2rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.analytics-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Matching the "Blue Pipe + Centered Text" Header */
+.analytics-card h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a202c;
+  /* Dark text */
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  /* Centering logic */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  /* Override previous border style */
+  border-left: none;
+  padding-left: 0;
+}
+
+/* The Blue Accent Line */
+/* Blue Accent Line Removed */
+
+/* ----- Wide Card Adjustment ----- */
+.analytics-card.wide {
+  /* Allow it to sit in the grid flow naturally */
+  grid-column: auto;
+}
+
+/* =========================================================
+    📊 TOOLTIP & CHART STYLING
+    ========================================================= */
+.recharts-default-tooltip {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: var(--shadow-lg) !important;
+  color: var(--text-main) !important;
+  font-size: 0.85rem !important;
+  padding: 0.75rem !important;
+}
+
+/* Legend & Axis Text - handled mostly via props or overrides */
+.recharts-legend-item-text {
+  color: var(--text-muted) !important;
+}
+
+.recharts-text {
+  fill: var(--text-muted) !important;
+  font-size: 0.8rem;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--border-light);
+  opacity: 0.5;
+}
+
+/* =========================================================
+    🌀 ANIMATIONS
+    ========================================================= */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
   }
-  
-  /* ----- Titles ----- */
-  .analytics-title {
-    text-align: center;
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--heading-color);
-    letter-spacing: 0.5px;
-    margin-bottom: 0.4rem;
-    font-family: "Montserrat", sans-serif;
-    animation: fadeInDown 0.8s ease;
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .analytics-subtitle {
-    text-align: center;
-    font-size: 1rem;
-    color: var(--brand-color);
-    margin-bottom: 3rem;
-    animation: fadeInUp 1s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  /* =========================================================
-     🎨 GRID LAYOUT
-     ========================================================= */
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
   .analytics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-    gap: 4rem;
-    justify-items: center;
-    align-items: start;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
+    grid-template-columns: 1fr;
   }
-  
-  /* ----- Card Styling ----- */
-  .analytics-card {
-    background: var(--card-bg);
-    border-radius: 1.25rem;
-    box-shadow: 0 6px 18px var(--shadow-color);
-    padding: 1.75rem 1.5rem;
-    transition: all 0.4s ease;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
+
+  .analytics-title {
+    font-size: 2rem;
   }
-  
-  .analytics-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
   }
-  
-  .analytics-card h3 {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-bottom: 1.25rem;
-    text-align: center;
-    letter-spacing: 0.3px;
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  /* ----- Wide Card (for Line Chart) ----- */
-  .analytics-card.wide {
-    grid-column: 1 / -1;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  /* =========================================================
-     📊 TOOLTIP & CHART STYLING
-     ========================================================= */
-  .recharts-default-tooltip {
-    background: var(--secondary-bg) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px !important;
-    box-shadow: 0 4px 12px var(--shadow-color);
-    color: var(--text-color) !important;
-    font-family: "Lato", sans-serif;
-    font-size: 0.9rem;
-    padding: 0.5rem 0.75rem !important;
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  /* Legend text color */
-  .recharts-legend-item-text {
-    color: var(--text-color) !important;
-  }
-  
-  /* Axis label colors */
-  .recharts-cartesian-axis-tick-value {
-    fill: var(--text-color) !important;
-    font-size: 0.85rem;
-  }
-  
-  /* =========================================================
-     ☀️ LIGHT MODE
-     ========================================================= */
-  body.light .relief-analytics-section {
-    color: var(--text-color);
-  }
-  
-  body.light .analytics-card {
-    background: var(--card-bg);
-    box-shadow: 0 4px 15px var(--shadow-color);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-  }
-  
-  body.light .analytics-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.15);
-  }
-  
-  body.light .analytics-title {
-    color: var(--heading-color);
-  }
-  
-  body.light .analytics-subtitle {
-    color: var(--brand-color);
-  }
-  
-  body.light .recharts-default-tooltip {
-    background: var(--secondary-bg) !important;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    color: var(--text-color) !important;
-  }
-  
-  body.light .recharts-cartesian-axis-tick-value {
-    fill: var(--text-color) !important;
-  }
-  
-  /* =========================================================
-     🌀 ANIMATIONS
-     ========================================================= */
-  @keyframes fadeInDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
+}

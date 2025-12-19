@@ -11,7 +11,7 @@ class RoutingService {
     constructor() {
         // OSRM API for real routing
         this.osrmEndpoint = 'https://router.project-osrm.org/route/v1/driving';
-        
+
         // If you have a Python routing model, configure it here
         this.pythonModelEndpoint = process.env.ROUTING_MODEL_URL || null;
     }
@@ -71,60 +71,60 @@ class RoutingService {
         } else if (!destination || (typeof destination.lat === 'undefined' || typeof destination.lon === 'undefined')) {
             throw new Error('Invalid destination provided. Must be a place name or an object with lat/lon.');
         }
-        
+
         const routeId = `ROUTE_${Date.now()}`;
         const startTime = Date.now();
 
         try {
             // Step 1: Get disaster zones to avoid
             const disasterZones = await this.getActiveDisasterZones().catch(() => []);
-            
+
             // Step 2: Calculate base route using OSRM
             const baseRoute = await this.getOSRMRoute(processedOrigin, processedDestination);
-            
+
             if (!baseRoute || baseRoute.fallback) {
                 console.warn('⚠️ Using fallback route calculation');
                 console.log('Fallback route waypoints:', baseRoute.waypoints?.length || 0);
             } else {
                 console.log(`✅ OSRM route with ${baseRoute.waypoints?.length || 0} waypoints`);
             }
-            
+
             // Step 3: Apply routing factors (traffic, weather, hazards)
             const factors = await this.calculateRoutingFactors(baseRoute, disasterZones);
-            
+
             // Step 4: Adjust route based on factors
             const optimizedRoute = this.optimizeRoute(baseRoute, factors, disasterZones);
-            
+
             // Step 5: Calculate alternatives
             const alternatives = [];
-            
+
             // Step 6: Try to save to database (non-blocking)
             let savedToDatabase = false;
             try {
                 await RoutingHistory.create({
-                routeId,
-                requestType: options.requestType || 'emergency_response',
-                origin: {
-                    lat: origin.lat,
-                    lon: origin.lon,
-                    name: origin.name || 'Origin',
-                    type: origin.type || 'response_center'
-                },
-                destination: {
-                    lat: destination.lat,
-                    lon: destination.lon,
-                    name: destination.name || 'Destination',
-                    disasterZoneId: destination.disasterZoneId
-                },
-                routeData: optimizedRoute,
-                routingFactors: factors,
-                alternatives: alternatives,
-                status: 'planned',
-                severity: options.severity || 'medium',
-                emergencyId: options.emergencyId,
-                userId: options.userId,
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-            });
+                    routeId,
+                    requestType: options.requestType || 'emergency_response',
+                    origin: {
+                        lat: origin.lat,
+                        lon: origin.lon,
+                        name: origin.name || 'Origin',
+                        type: origin.type || 'response_center'
+                    },
+                    destination: {
+                        lat: destination.lat,
+                        lon: destination.lon,
+                        name: destination.name || 'Destination',
+                        disasterZoneId: destination.disasterZoneId
+                    },
+                    routeData: optimizedRoute,
+                    routingFactors: factors,
+                    alternatives: alternatives,
+                    status: 'planned',
+                    severity: options.severity || 'medium',
+                    emergencyId: options.emergencyId,
+                    userId: options.userId,
+                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+                });
 
                 savedToDatabase = true;
             } catch (dbError) {
@@ -157,37 +157,37 @@ class RoutingService {
     async getOSRMRoute(origin, destination) {
         try {
             // Validate coordinates
-            if (!this.validateCoordinates(origin.lat, origin.lon) || 
+            if (!this.validateCoordinates(origin.lat, origin.lon) ||
                 !this.validateCoordinates(destination.lat, destination.lon)) {
                 throw new Error('Invalid coordinates provided');
             }
 
             // OSRM expects lon,lat format
             const url = `${this.osrmEndpoint}/${origin.lon},${origin.lat};${destination.lon},${destination.lat}?overview=full&geometries=geojson&steps=true&annotations=true`;
-            
+
             console.log('🌐 Calling OSRM API:', url);
-            
+
             const response = await fetch(url, {
                 timeout: 10000 // 10 second timeout
             });
-            
+
             if (!response.ok) {
                 throw new Error(`OSRM API returned ${response.status}`);
             }
-            
+
             const data = await response.json();
-            
+
             if (!data.routes || data.routes.length === 0) {
                 throw new Error('No route found by OSRM');
             }
-            
+
             const route = data.routes[0];
-            
+
             // Extract detailed waypoints from geometry
             const waypoints = this.extractDetailedWaypoints(route.geometry);
-            
-            console.log(`✅ OSRM route found: ${waypoints.length} waypoints, ${(route.distance/1000).toFixed(2)} km`);
-            
+
+            console.log(`✅ OSRM route found: ${waypoints.length} waypoints, ${(route.distance / 1000).toFixed(2)} km`);
+
             return {
                 distance: route.distance / 1000, // Convert to km
                 duration: route.duration / 60, // Convert to minutes
@@ -197,7 +197,7 @@ class RoutingService {
                 confidence: 'high',
                 source: 'osrm'
             };
-            
+
         } catch (error) {
             console.error('❌ OSRM routing failed:', error.message);
             console.log('⚠️ Falling back to direct route calculation');
@@ -217,7 +217,7 @@ class RoutingService {
      */
     async getActiveDisasterZones() {
         try {
-            return await DisasterZone.find({ 
+            return await DisasterZone.find({
                 status: { $in: ['active', 'monitoring'] }
             });
         } catch (error) {
@@ -233,7 +233,7 @@ class RoutingService {
         try {
             // Get unique locations from inventory
             const locations = await Location.find({});
-            
+
             // Calculate distances
             const centersWithDistance = locations.map(loc => ({
                 ...loc.toObject(),
@@ -255,9 +255,11 @@ class RoutingService {
      * Calculate routing factors
      */
     async calculateRoutingFactors(route, disasterZones) {
+        const origin = route.waypoints && route.waypoints.length > 0 ? route.waypoints[0] : null;
+
         const factors = {
             traffic: this.estimateTraffic(),
-            weather: await this.getWeatherFactor(),
+            weather: await this.getWeatherFactor(origin),
             roadConditions: 1.0,
             timeOfDay: this.getTimeOfDayFactor(),
             urgency: 1.0,
@@ -284,24 +286,24 @@ class RoutingService {
      */
     optimizeRoute(baseRoute, factors, disasterZones) {
         let optimized = { ...baseRoute };
-        
+
         // Adjust duration based on factors
         let durationMultiplier = 1.0;
         durationMultiplier *= factors.traffic;
         durationMultiplier *= factors.weather;
         durationMultiplier *= factors.timeOfDay;
         durationMultiplier *= factors.disasterZoneImpact;
-        
+
         optimized.duration = Math.round(baseRoute.duration * durationMultiplier);
-        
+
         // Add hazard delays
         if (factors.hazards.length > 0) {
             optimized.duration += factors.hazards.length * 5; // 5 min per hazard
         }
-        
+
         // Calculate ETA
         optimized.eta = new Date(Date.now() + optimized.duration * 60000).toISOString();
-        
+
         // Add warnings
         optimized.warnings = [];
         if (factors.hazards.length > 0) {
@@ -310,7 +312,7 @@ class RoutingService {
         if (factors.traffic > 1.3) {
             optimized.warnings.push('Heavy traffic expected');
         }
-        
+
         return optimized;
     }
 
@@ -328,10 +330,10 @@ class RoutingService {
      */
     routeIntersectsZone(route, zone) {
         if (!route.waypoints || !zone.location) return false;
-        
+
         const zoneCenter = zone.location.center;
         const zoneRadius = zone.location.radius;
-        
+
         // Check if any waypoint is within the zone
         return route.waypoints.some(waypoint => {
             const distance = this.calculateDistance(
@@ -347,7 +349,7 @@ class RoutingService {
      */
     calculateDisasterZoneImpact(route, disasterZones) {
         let impact = 1.0;
-        
+
         disasterZones.forEach(zone => {
             if (this.routeIntersectsZone(route, zone)) {
                 // Increase time based on severity
@@ -359,7 +361,7 @@ class RoutingService {
                 }
             }
         });
-        
+
         return impact;
     }
 
@@ -372,14 +374,14 @@ class RoutingService {
             console.warn('⚠️ Invalid geometry, returning empty waypoints');
             return [];
         }
-        
+
         const coords = geometry.coordinates;
         const waypoints = [];
-        
+
         // For accurate routing, we need more waypoints
         // Sample every 5th point for detailed route, or all if less than 100 points
         const sampleRate = coords.length > 100 ? 5 : 1;
-        
+
         for (let i = 0; i < coords.length; i += sampleRate) {
             // OSRM returns [lon, lat] format
             waypoints.push({
@@ -387,18 +389,18 @@ class RoutingService {
                 lon: coords[i][0]  // longitude
             });
         }
-        
+
         // Always include the last point for accuracy
         if (coords.length > 0 && waypoints[waypoints.length - 1].lat !== coords[coords.length - 1][1]) {
             const last = coords[coords.length - 1];
-            waypoints.push({ 
-                lat: last[1], 
-                lon: last[0] 
+            waypoints.push({
+                lat: last[1],
+                lon: last[0]
             });
         }
-        
+
         console.log(`📍 Extracted ${waypoints.length} waypoints from ${coords.length} coordinates`);
-        
+
         return waypoints;
     }
 
@@ -409,10 +411,10 @@ class RoutingService {
         const R = 6371; // Earth's radius in km
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
 
@@ -429,9 +431,21 @@ class RoutingService {
     /**
      * Get weather factor
      */
-    async getWeatherFactor() {
-        // In production, call weather API
-        return 1.0;
+    async getWeatherFactor(origin) {
+        try {
+            // Use origin coordinates if available, otherwise default location
+            const lat = origin?.lat || 30.7333; // Chandigarh default
+            const lon = origin?.lon || 76.7794;
+
+            const WeatherService = (await import('./weatherService.js')).default;
+            const weather = await WeatherService.getCurrentWeather(lat, lon);
+
+            console.log(`Cloudy with a chance of AI: ${weather.condition} (${weather.temp}°C)`);
+            return WeatherService.calculateRoutingImpact(weather);
+        } catch (error) {
+            console.warn('Weather service error:', error.message);
+            return 1.0;
+        }
     }
 
     /**
@@ -452,13 +466,13 @@ class RoutingService {
             origin.lat, origin.lon,
             destination.lat, destination.lon
         );
-        
+
         // Create intermediate waypoints for more realistic visualization
         const waypoints = [];
         const numIntermediatePoints = Math.min(Math.floor(distance / 2), 10); // One point every 2km, max 10
-        
+
         waypoints.push({ lat: origin.lat, lon: origin.lon });
-        
+
         // Add intermediate points along the path
         for (let i = 1; i <= numIntermediatePoints; i++) {
             const ratio = i / (numIntermediatePoints + 1);
@@ -467,11 +481,11 @@ class RoutingService {
                 lon: origin.lon + (destination.lon - origin.lon) * ratio
             });
         }
-        
+
         waypoints.push({ lat: destination.lat, lon: destination.lon });
-        
+
         console.log(`⚠️ Using fallback route with ${waypoints.length} waypoints`);
-        
+
         return {
             distance: distance,
             duration: distance * 2, // Assume 30 km/h average in emergency
@@ -500,14 +514,14 @@ class RoutingService {
      */
     fallbackRoute(origin, destination, routeId) {
         console.log('⚠️ Creating fallback route');
-        
+
         const distance = this.calculateDistance(
             origin.lat, origin.lon,
             destination.lat, destination.lon
         );
-        
+
         const fallbackRouteData = this.calculateFallbackRoute(origin, destination);
-        
+
         return {
             success: true, // Still return success but with warning
             routeId,
@@ -525,7 +539,7 @@ class RoutingService {
                 source: 'fallback'
             },
             alternatives: [],
-            factors: { 
+            factors: {
                 fallback: true,
                 traffic: 1.0,
                 weather: 1.0,

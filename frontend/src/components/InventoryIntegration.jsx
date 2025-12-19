@@ -74,7 +74,15 @@ const InventoryIntegration = () => {
         <div className="inventory-integration">
             <div className="inventory-header">
                 <h2>📦 Real-Time Inventory</h2>
-                <p>Live stock levels from backend database</p>
+                <p>Live stock levels with dispatch impact tracking</p>
+                <div className="dispatch-legend">
+                    <span className="legend-item">
+                        <span className="auto-indicator">🤖</span> Auto-dispatched (High+ severity)
+                    </span>
+                    <span className="legend-item">
+                        <span className="manual-indicator">👤</span> Manual dispatch (Medium/Low severity)
+                    </span>
+                </div>
             </div>
 
             <div className="inventory-controls">
@@ -135,6 +143,12 @@ const InventoryIntegration = () => {
                                 <div>
                                     <h3>{item.name}</h3>
                                     <span className="category-badge">{item.category}</span>
+                                    {/* Show dispatch impact if recently updated */}
+                                    {item.lastUpdated && new Date() - new Date(item.lastUpdated) < 300000 && (
+                                        <span className="dispatch-impact">
+                                            📦 Recently dispatched
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div 

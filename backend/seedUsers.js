@@ -7,7 +7,7 @@ dotenv.config();
 
 async function seedUsersData() {
   try {
-    console.log("👤 Seeding users (Admin, Branch Manager, Volunteer, Affected Citizen)...");
+    console.log("👤 Seeding users (Admin, Branch Manager, Volunteer, Refugee)...");
     let createdCount = 0;
     let updatedCount = 0;
     

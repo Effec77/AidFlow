@@ -74,21 +74,21 @@ app.post("/api/register", async (req, res) => {
       return res.status(400).json({ message: "User already exists with this username." });
     }
 
-    // RBAC: Only allow public registration for 'volunteer' and 'affected citizen'
+    // RBAC: Only allow public registration for 'volunteer' and 'refugee'
     // Admin and Branch Manager roles must be created by administrators
-    const allowedPublicRoles = ['volunteer', 'affected citizen'];
+    const allowedPublicRoles = ['volunteer', 'refugee'];
     let userRole = role ? role.toLowerCase().trim() : 'volunteer'; // Default to volunteer
     
     // Validate role against allowed public roles
     if (!allowedPublicRoles.includes(userRole)) {
       console.warn(`⚠️ Attempted registration with restricted role: ${userRole}`);
       return res.status(403).json({ 
-        message: `Role '${userRole}' cannot be registered publicly. Only 'volunteer' and 'affected citizen' roles are available for public registration.` 
+        message: `Role '${userRole}' cannot be registered publicly. Only 'volunteer' and 'refugee' roles are available for public registration.` 
       });
     }
 
     // Validate role against User model enum (extra safety check)
-    const validRoles = ['admin', 'branch manager', 'volunteer', 'affected citizen'];
+    const validRoles = ['admin', 'branch manager', 'volunteer', 'refugee'];
     if (!validRoles.includes(userRole)) {
       return res.status(400).json({ 
         message: `Invalid role '${userRole}'. Valid roles are: ${validRoles.join(', ')}` 

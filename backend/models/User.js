@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
     },
     role: { // Updated enum to include the four new roles
         type: String,
-        enum: ['admin', 'branch manager', 'volunteer', 'affected citizen'],
+        enum: ['admin', 'branch manager', 'volunteer', 'refugee'],
         default: 'volunteer'
     },
 
@@ -114,9 +114,9 @@ export const SEED_USERS = [
         volunteerSkills: ['Transport', 'Medical Aid', 'Fundraising']
     },
     {
-        username: 'citizen@punjab.in',
-        password: 'CitizenPass123',
-        role: 'affected citizen',
+        username: 'refugee@punjab.in',
+        password: 'RefugeePass123',
+        role: 'refugee',
         firstName: 'Harpreet',
         lastName: 'Sharma',
         country: 'India',
@@ -124,7 +124,7 @@ export const SEED_USERS = [
         city: 'Jalandhar',
         address: 'Model Town, Jalandhar',
         companyType: 'Individual',
-        occupation: 'School Teacher',
+        occupation: 'Displaced Person',
         volunteerSkills: []
     },
 ];

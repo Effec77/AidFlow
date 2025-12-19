@@ -8,9 +8,10 @@ import '../css/EmergencyDashboard.css';
 
 const EmergencyDashboard = () => {
     const navigate = useNavigate();
-    const { token, userRole } = useContext(UserContext);
+    const { token, userRole, userId } = useContext(UserContext);
     const [activeEmergencies, setActiveEmergencies] = useState([]);
     const [requests, setRequests] = useState([]);
+    const [dispatchRequests, setDispatchRequests] = useState([]);
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedEmergency, setSelectedEmergency] = useState(null);
@@ -23,6 +24,7 @@ const EmergencyDashboard = () => {
             fetchAnalytics();
             if (userRole === 'admin' || userRole === 'branch manager') {
                 fetchRequests();
+                fetchDispatchRequests();
             }
             
             // Refresh every 30 seconds
@@ -31,6 +33,7 @@ const EmergencyDashboard = () => {
                 fetchAnalytics();
                 if (userRole === 'admin' || userRole === 'branch manager') {
                     fetchRequests();
+                    fetchDispatchRequests();
                 }
             }, 30000);
 
@@ -67,6 +70,58 @@ const EmergencyDashboard = () => {
             setRequests(response.data);
         } catch (error) {
             console.error('Failed to fetch requests:', error);
+        }
+    };
+
+    const fetchDispatchRequests = async () => {
+        try {
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/emergency/dispatch-requests');
+            setDispatchRequests(response.data.requests);
+        } catch (error) {
+            console.error('Failed to fetch dispatch requests:', error);
+        }
+    };
+
+    const approveDispatchRequest = async (requestId) => {
+        try {
+            console.log('Approving dispatch request:', requestId, 'with userId:', userId);
+            console.log('Token available:', !!token);
+            console.log('User role:', userRole);
+            
+            const api = createAuthenticatedAxios(token);
+            const response = await api.put(`/api/emergency/dispatch-requests/${requestId}/approve`, {
+                adminId: userId || 'admin', // Use actual user ID
+                notes: 'Approved via dashboard'
+            });
+            
+            console.log('Approval response:', response.data);
+            fetchDispatchRequests();
+            fetchActiveEmergencies();
+            alert('Dispatch request approved and executed!');
+        } catch (error) {
+            console.error('Failed to approve dispatch request:', error);
+            console.error('Error details:', error.response?.data);
+            alert(`Failed to approve dispatch request: ${error.response?.data?.error || error.message}`);
+        }
+    };
+
+    const rejectDispatchRequest = async (requestId) => {
+        const reason = prompt('Enter rejection reason:');
+        if (!reason) return;
+
+        try {
+            const api = createAuthenticatedAxios(token);
+            await api.put(`/api/emergency/dispatch-requests/${requestId}/reject`, {
+                adminId: userId || 'admin', // Use actual user ID
+                reason: reason
+            });
+            
+            fetchDispatchRequests();
+            alert('Dispatch request rejected');
+        } catch (error) {
+            console.error('Failed to reject dispatch request:', error);
+            alert('Failed to reject dispatch request');
         }
     };
 
@@ -202,6 +257,13 @@ const EmergencyDashboard = () => {
                             >
                                 <Package size={16} />
                                 Requests
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === 'dispatch-requests' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('dispatch-requests')}
+                            >
+                                <Clock size={16} />
+                                Dispatch Requests ({dispatchRequests.length})
                             </button>
                         </div>
                     )}
@@ -450,6 +512,93 @@ const EmergencyDashboard = () => {
                                                 Delete
                                             </button>
                                         )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Dispatch Requests Section */}
+            {activeTab === 'dispatch-requests' && (userRole === 'admin' || userRole === 'branch manager') && (
+                <div className="dispatch-requests-section">
+                    <h2>Pending Dispatch Requests</h2>
+                    <p className="section-description">
+                        Medium/Low severity emergencies requiring manual approval for dispatch
+                    </p>
+                    
+                    {dispatchRequests.length === 0 ? (
+                        <div className="no-requests">
+                            <p>No pending dispatch requests. All high severity emergencies are automatically dispatched.</p>
+                        </div>
+                    ) : (
+                        <div className="dispatch-requests-grid">
+                            {dispatchRequests.map((request) => (
+                                <div key={request._id} className="dispatch-request-card">
+                                    <div className="request-header">
+                                        <div className="request-info">
+                                            <h3>Emergency: {request.emergencyId}</h3>
+                                            <p className="severity-info">
+                                                Severity: <span className={`severity-${request.severity}`}>{request.severity}</span>
+                                            </p>
+                                        </div>
+                                        <div className="request-badges">
+                                            <div 
+                                                className="priority-badge"
+                                                style={{ backgroundColor: getPriorityColor(request.priority) }}
+                                            >
+                                                {request.priority}
+                                            </div>
+                                            <div className="status-badge pending">
+                                                {request.status}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="request-details">
+                                        <div className="detail-item">
+                                            <Package className="detail-icon" />
+                                            <span>Resources: {request.requestedResources.length} items</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <Clock className="detail-icon" />
+                                            <span>Requested: {new Date(request.createdAt).toLocaleString()}</span>
+                                        </div>
+                                        {request.reasoning && (
+                                            <div className="detail-item">
+                                                <AlertTriangle className="detail-icon" />
+                                                <span>{request.reasoning}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="requested-resources">
+                                        <h4>Requested Resources:</h4>
+                                        <ul>
+                                            {request.requestedResources.map((resource, index) => (
+                                                <li key={index}>
+                                                    {resource.quantity}x {resource.name} ({resource.category})
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    <div className="request-actions">
+                                        <button 
+                                            onClick={() => approveDispatchRequest(request._id)}
+                                            className="approve-btn"
+                                        >
+                                            <CheckCircle size={16} />
+                                            Approve & Dispatch
+                                        </button>
+                                        <button 
+                                            onClick={() => rejectDispatchRequest(request._id)}
+                                            className="reject-btn"
+                                        >
+                                            <Trash2 size={16} />
+                                            Reject
+                                        </button>
                                     </div>
                                 </div>
                             ))}

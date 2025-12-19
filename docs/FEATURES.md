@@ -29,23 +29,29 @@ AidFlow is a disaster relief management system with AI-powered emergency respons
 
 ---
 
-### 2. One-Click Dispatch
-**Components:** `DispatchControl.jsx`, `DispatchTracker.jsx`
+### 2. Consistent Dispatch System
+**Components:** `DispatchControl.jsx`, `DispatchTracker.jsx`, `EmergencyDashboard.jsx`
 
-**Flow:**
-1. Admin reviews emergency in dashboard
-2. Clicks "Dispatch" button
-3. System automatically:
+**Automatic Dispatch (High/Critical Severity):**
+1. AI analyzes emergency and determines high/critical severity
+2. System automatically:
    - Allocates resources from nearest centers
    - Calculates routes for each center
    - Updates inventory (deducts stock)
    - Creates dispatch records
-   - Updates emergency status
+   - Updates emergency status to "dispatched"
+
+**Manual Dispatch (Medium/Low Severity):**
+1. AI analyzes emergency and determines medium/low severity
+2. System creates dispatch request for admin approval
+3. Admin reviews request in dashboard
+4. Upon approval, same automated process executes
 
 **Key Features:**
-- Fully automated resource allocation
-- Multi-center dispatch support
+- Severity-based dispatch logic
+- Automatic vs manual approval workflow
 - Real-time inventory updates
+- Multi-center dispatch support
 - Route optimization
 
 **Backend:** `/api/emergency/dispatch/:emergencyId`

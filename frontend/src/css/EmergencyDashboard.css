@@ -1,72 +1,100 @@
-/* Emergency Dashboard Styles */
+/* =========================================================
+   🚨 EMERGENCY DASHBOARD STYLES
+   Refactored for Industry Standard Design System
+   ========================================================= */
+
+/* Main Container */
 .emergency-dashboard {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  background: var(--primary-bg);
-  color: var(--text-color);
   min-height: 100vh;
+  /* Use global bg variable */
+  background: transparent;
 }
 
-/* Dashboard Header */
+/* ============================
+   HEADER SECTION
+   ============================ */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .dashboard-header h1 {
   font-size: 2.5rem;
+  font-weight: 800;
   margin: 0;
-  color: var(--accent-color);
+  color: var(--text-main);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+/* Explicit fix for Dark Mode Header Visibility */
+body.dark .dashboard-header h1 {
+  color: #f8fafc;
 }
 
 .dashboard-header p {
   margin: 0.5rem 0 0 0;
-  color: var(--text-secondary);
-  font-size: 1.1rem;
+  color: var(--text-muted);
+  font-size: 1.125rem;
+}
+
+body.dark .dashboard-header p {
+  color: #94a3b8;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 /* Tab Buttons */
 .tab-buttons {
   display: flex;
-  background: var(--card-bg);
-  border-radius: 8px;
-  padding: 4px;
-  gap: 4px;
+  background: var(--bg-card);
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  gap: 0.25rem;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
 }
 
 .tab-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: none;
+  padding: 0.625rem 1.25rem;
+  background: transparent;
   border: none;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  font-weight: 500;
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-fast);
+}
+
+body.dark .tab-btn {
+  color: #cbd5e1;
+}
+
+.tab-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
 }
 
 .tab-btn.active {
-  background: var(--accent-color);
-  color: white;
-}
-
-.tab-btn:hover:not(.active) {
-  background: rgba(255, 213, 79, 0.1);
-  color: var(--accent-color);
+  background: var(--primary-500);
+  color: white !important;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Dispatch Tracker Button */
@@ -75,449 +103,577 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-md);
 }
 
 .dispatch-tracker-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
 }
 
-/* Analytics Grid */
+/* ============================
+   ANALYTICS CARDS
+   ============================ */
 .analytics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
 }
 
 .analytics-card {
-  background: var(--card-bg);
+  background: var(--bg-card);
   padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  border: 1px solid var(--border-light);
   display: flex;
   align-items: center;
-  gap: 1rem;
-  transition: all 0.3s ease;
+  gap: 1.25rem;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.analytics-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary-500);
+  opacity: 0.8;
 }
 
 .analytics-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--shadow-color);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-300);
 }
 
 .card-icon {
-  color: var(--accent-color);
+  color: var(--primary-500);
+  background: var(--primary-50);
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  width: 3rem;
+  height: 3rem;
   flex-shrink: 0;
 }
 
+body.dark .card-icon {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.card-content {
+  flex: 1;
+  /* Allow content to take remaining space */
+  min-width: 0;
+  /* Critical for flex child text truncation/wrapping to work */
+  overflow: hidden;
+}
+
 .card-content h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+  margin: 0 0 0.25rem 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  /* Remove truncation, allow wrapping */
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.2;
+}
+
+body.dark .card-content h3 {
+  color: #94a3b8;
 }
 
 .card-number {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
-  color: var(--text-color);
+  color: var(--text-main);
+  line-height: 1.1;
 }
 
-/* Requests Section */
-.requests-section {
-  margin-top: 2rem;
-}
-
-.requests-section h2 {
-  font-size: 1.8rem;
+/* ============================
+   EMERGENCIES & REQUESTS LISTS
+   ============================ */
+.emergencies-section h2,
+.requests-section h2,
+.dispatch-requests-section h2 {
+  font-size: 1.5rem;
   margin-bottom: 1.5rem;
-  color: var(--text-color);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
+.no-emergencies,
 .no-requests {
   text-align: center;
-  padding: 3rem;
-  background: var(--card-bg);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
+  padding: 4rem 2rem;
+  background: var(--bg-card);
+  border-radius: 1rem;
+  border: 1px dashed var(--border-light);
+  color: var(--text-muted);
+  font-size: 1.125rem;
 }
 
-.requests-grid {
+.emergencies-grid,
+.requests-grid,
+.dispatch-requests-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 1.5rem;
 }
 
-/* Request Card */
-.request-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+/* Common Card Styles - The "First Kind" (Dark/Clean) */
+.emergency-card,
+.request-card,
+.dispatch-request-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
   padding: 1.5rem;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  cursor: pointer;
 }
 
-.request-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--shadow-color);
+.emergency-card:hover,
+.request-card:hover,
+.dispatch-request-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-300);
 }
 
+/* --- THE RED-ORANGE HUE EFFECT --- */
+/* Transform headers into banners that span the full width */
+.emergency-header,
 .request-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
+  align-items: center;
+
+  /* Counteract card padding to span full width */
+  margin: -1.5rem -1.5rem 0 -1.5rem;
+  padding: 1.25rem 1.5rem;
+
+  /* The "Hue Effect" requested */
+  background: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%);
+
+  border-radius: 1rem 1rem 0 0;
+  /* Rounded top corners only */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  /* Force white text on gradient */
+}
+
+/* Text adjustments for the gradient header */
+.emergency-header h3,
+.request-header h3,
+.emergency-header .request-info h3 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.emergency-header .emergency-id,
+.request-header .requester-info {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.1);
+  /* Subtle badge bg instead of grey */
+  border: none;
 }
 
 .request-info h3 {
   margin: 0 0 0.5rem 0;
-  font-size: 1.3rem;
-  color: var(--text-color);
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 .requester-info {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 .request-badges {
   display: flex;
-  gap: 0.5rem;
   flex-direction: column;
   align-items: flex-end;
+  gap: 0.5rem;
 }
 
-.priority-badge, .status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
+/* Badges on the colored header need shadow to pop */
+.severity-badge,
+.priority-badge,
+.status-badge {
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
   color: white;
-  text-transform: capitalize;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  width: fit-content;
+  border: 2px solid white;
+  /* clean border provided by contrast */
 }
 
-/* Request Details */
+/* Colors for badges */
+.severity-badge[style*="critical"],
+.priority-badge[style*="high"] {
+  background-color: white !important;
+  color: #dc2626 !important;
+  /* Inverted for readability on red gradient */
+}
+
+.severity-badge[style*="high"],
+.priority-badge[style*="normal"] {
+  background-color: white !important;
+  color: #ea580c !important;
+}
+
+.severity-badge[style*="low"],
+.priority-badge[style*="low"] {
+  background-color: white !important;
+  color: #10b981 !important;
+}
+
+/* Info Sections (Inside the dark card body) */
+.emergency-info,
 .request-details {
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  /* Spacing from header */
 }
 
+.location-info,
+.time-info,
+.disaster-info,
 .detail-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--text-secondary);
+  gap: 0.75rem;
+  color: var(--text-main);
   font-size: 0.9rem;
 }
 
+.info-icon,
 .detail-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--accent-color);
+  width: 18px;
+  height: 18px;
+  color: var(--primary-500);
+  flex-shrink: 0;
+}
+
+/* Make icons in dark mode orange to match gradient theme? 
+   No, keep primary blue for consistency or maybe orange for cohesion?
+   Let's stick to Primary Blue for actions, but maybe Accent Orange for data points.
+*/
+
+.emergency-message {
+  background: var(--bg-hover);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  font-style: italic;
+  color: var(--text-main);
+  border-left: 3px solid #FF5E62;
+  /* Match the red-orange gradient */
 }
 
 .request-notes {
-  background: rgba(255, 213, 79, 0.1);
+  background: var(--warning-50);
   padding: 0.75rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  border-radius: 0.5rem;
   font-size: 0.9rem;
+  color: var(--warning-700);
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
-/* Request Actions */
+body.dark .request-notes {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+}
+
+/* Action Buttons */
+.emergency-actions,
 .request-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.approve-btn, .reject-btn, .deliver-btn, .edit-btn, .delete-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.approve-btn {
-  background: #10b981;
-  color: white;
-}
-
-.approve-btn:hover {
-  background: #059669;
-}
-
-.reject-btn {
-  background: #dc2626;
-  color: white;
-}
-
-.reject-btn:hover {
-  background: #b91c1c;
-}
-
-.deliver-btn {
-  background: #3b82f6;
-  color: white;
-}
-
-.deliver-btn:hover {
-  background: #2563eb;
-}
-
-.edit-btn {
-  background: #f59e0b;
-  color: white;
-}
-
-.edit-btn:hover {
-  background: #d97706;
-}
-
-.delete-btn {
-  background: #dc2626;
-  color: white;
-}
-
-.delete-btn:hover {
-  background: #b91c1c;
-}
-
-/* Request Modal */
-.request-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.request-modal .modal-content {
-  background: var(--card-bg);
-  border-radius: 12px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.request-modal .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
 }
 
-.request-modal .modal-header h2 {
-  margin: 0;
-  color: var(--text-color);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-color);
-}
-
-.request-modal .modal-body {
-  padding: 1.5rem;
-}
-
-.request-summary {
-  background: rgba(255, 213, 79, 0.1);
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-}
-
-.request-summary h3 {
-  margin: 0 0 0.5rem 0;
-  color: var(--accent-color);
-}
-
-.request-summary p {
-  margin: 0.25rem 0;
-  color: var(--text-secondary);
-}
-
-/* Status Actions */
-.status-actions h4 {
-  margin: 0 0 1rem 0;
-  color: var(--text-color);
-}
-
-.status-buttons {
+.action-buttons {
   display: flex;
+  gap: 0.75rem;
+}
+
+button[class$="-btn"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-}
-
-.status-btn {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 6px;
-  font-weight: 500;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-fast);
   color: white;
+  box-shadow: var(--shadow-sm);
 }
 
-.status-btn.pending {
-  background: #f59e0b;
-}
-
-.status-btn.approve {
-  background: #10b981;
-}
-
-.status-btn.reject {
-  background: #dc2626;
-}
-
-.status-btn.deliver {
-  background: #3b82f6;
-}
-
-.status-btn.fulfill {
-  background: #059669;
-}
-
-.status-btn:hover {
+button[class$="-btn"]:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
-/* Notes Section */
-.notes-section h4 {
-  margin: 0 0 0.5rem 0;
-  color: var(--text-color);
+/* Variant Colors */
+.approve-btn,
+.complete-btn {
+  background: var(--success-500);
 }
 
-.notes-section textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--primary-bg);
-  color: var(--text-color);
-  font-family: inherit;
-  resize: vertical;
-  margin-bottom: 1rem;
+.approve-btn:hover,
+.complete-btn:hover {
+  background: var(--success-700);
 }
 
-.save-notes-btn {
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.reject-btn,
+.delete-btn {
+  background: var(--danger-500);
 }
 
-.save-notes-btn:hover {
-  background: #e6b800;
-  transform: translateY(-1px);
+.reject-btn:hover,
+.delete-btn:hover {
+  background: var(--danger-700);
 }
 
-/* Loading State */
-.loading {
+.edit-btn,
+.dispatch-btn {
+  background: #FF9966;
+  /* Matching Orange */
+}
+
+.edit-btn:hover,
+.dispatch-btn:hover {
+  background: #e07b48;
+}
+
+.deliver-btn {
+  background: var(--primary-500);
+}
+
+.deliver-btn:hover {
+  background: var(--primary-700);
+}
+
+
+/* ============================
+   MODALS
+   ============================ */
+.emergency-modal,
+.request-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 50vh;
-  font-size: 1.2rem;
-  color: var(--text-secondary);
+  z-index: 1100;
 }
 
-/* Responsive Design */
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 700px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-light);
+}
+
+.modal-header {
+  /* Apply the same gradient effect to modal headers */
+  background: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%);
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 1.5rem;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all var(--transition-fast);
+  border: none;
+}
+
+.close-btn:hover {
+  background: white;
+  color: #FF5E62;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.detail-section {
+  margin-bottom: 2rem;
+}
+
+.detail-section h3 {
+  color: #FF5E62;
+  /* Match theme */
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+  border-bottom: 2px solid var(--border-light);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.detail-section p {
+  color: var(--text-main);
+  margin: 0.5rem 0;
+}
+
+.detail-section strong {
+  color: var(--text-muted);
+  margin-right: 0.5rem;
+}
+
+/* Resources List in Modal */
+.resources-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  background: var(--bg-app);
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+
+.resources-detail ul {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+  color: var(--text-main);
+}
+
+/* Timeline */
+.timeline {
+  position: relative;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--border-light);
+}
+
+.timeline-event {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.timeline-event::before {
+  content: '';
+  position: absolute;
+  left: -1.95rem;
+  top: 0.25rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: #FF5E62;
+  border-radius: 50%;
+  border: 4px solid var(--bg-card);
+}
+
+.timeline-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.timeline-content {
+  background: var(--bg-hover);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--text-main);
+}
+
+/* Status Buttons in Modal */
+.status-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.status-btn {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+  font-weight: 600;
+  color: white;
+  border-radius: 0.5rem;
+  min-width: 120px;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .emergency-dashboard {
     padding: 1rem;
   }
-  
+
   .dashboard-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
-  
+
   .header-actions {
-    width: 100%;
     justify-content: space-between;
   }
-  
-  .tab-buttons {
-    flex: 1;
-  }
-  
+
+  .emergencies-grid,
   .requests-grid {
     grid-template-columns: 1fr;
   }
-  
-  .request-actions {
-    justify-content: center;
-  }
-  
-  .status-buttons {
-    justify-content: center;
-  }
-}
 
-@media (max-width: 480px) {
-  .dashboard-header h1 {
-    font-size: 2rem;
-  }
-  
-  .analytics-grid {
+  .resources-detail {
     grid-template-columns: 1fr;
-  }
-  
-  .request-card {
-    padding: 1rem;
-  }
-  
-  .request-header {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .request-badges {
-    flex-direction: row;
-    align-items: flex-start;
   }
 }
