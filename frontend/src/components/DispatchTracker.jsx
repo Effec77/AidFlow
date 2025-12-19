@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
+import L from 'leaflet';
 import axios from 'axios';
 import { Truck, MapPin, Clock, Package, Navigation, Activity, AlertCircle } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import '../css/DispatchTracker.css';
+
+// Fix for default marker icons in Leaflet (required for React)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 /**
  * Real-Time Dispatch Tracking Dashboard
@@ -236,7 +245,7 @@ const DispatchTracker = () => {
                                                 }
                                             }}
                                         >
-                                            🚗 Mark En Route
+                                            🚗 En Route
                                         </button>
                                     )}
                                     {dispatch.status === 'en_route' && (
@@ -255,27 +264,26 @@ const DispatchTracker = () => {
                                                 }
                                             }}
                                         >
-                                            ✓ Mark Complete
+                                            ✓ Complete
                                         </button>
                                     )}
-                                    {dispatch.status === 'completed' && (
-                                        <button 
-                                            className="action-btn delete-btn"
-                                            onClick={async (e) => {
-                                                e.stopPropagation();
-                                                if (window.confirm('Delete this completed dispatch?')) {
-                                                    try {
-                                                        await axios.delete(`http://localhost:5000/api/emergency/${dispatch.emergencyId}`);
-                                                        fetchActiveDispatches();
-                                                    } catch (error) {
-                                                        console.error('Failed to delete:', error);
-                                                    }
+                                    {/* Delete button always visible */}
+                                    <button 
+                                        className="action-btn delete-btn"
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            if (window.confirm('Delete this dispatch?')) {
+                                                try {
+                                                    await axios.delete(`http://localhost:5000/api/emergency/${dispatch.emergencyId}`);
+                                                    fetchActiveDispatches();
+                                                } catch (error) {
+                                                    console.error('Failed to delete:', error);
                                                 }
-                                            }}
-                                        >
-                                            🗑️ Delete
-                                        </button>
-                                    )}
+                                            }
+                                        }}
+                                    >
+                                        🗑️
+                                    </button>
                                 </div>
                             </div>
                         ))
@@ -294,17 +302,18 @@ const DispatchTracker = () => {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         />
 
-                        {/* Plot all active dispatches */}
+                        {/* Plot all active dispatches with routes */}
                         {activeDispatches.map((dispatch) => (
                             <React.Fragment key={dispatch.emergencyId}>
                                 {/* Emergency Location Marker */}
                                 <Marker position={[dispatch.location.lat, dispatch.location.lon]}>
                                     <Popup>
                                         <div className="map-popup">
-                                            <strong>{dispatch.emergencyId}</strong>
+                                            <strong>🚨 {dispatch.emergencyId}</strong>
                                             <p>Status: {dispatch.status}</p>
-                                            <p>Type: {dispatch.aiAnalysis?.disaster?.type}</p>
-                                            <p>Severity: {dispatch.aiAnalysis?.severity}</p>
+                                            <p>Type: {dispatch.aiAnalysis?.disaster?.type || 'Emergency'}</p>
+                                            <p>Severity: {dispatch.aiAnalysis?.severity || 'Unknown'}</p>
+                                            <p>Location: {dispatch.location.address || `${dispatch.location.lat.toFixed(4)}, ${dispatch.location.lon.toFixed(4)}`}</p>
                                         </div>
                                     </Popup>
                                 </Marker>
@@ -312,50 +321,66 @@ const DispatchTracker = () => {
                                 {/* Emergency Zone Circle */}
                                 <Circle
                                     center={[dispatch.location.lat, dispatch.location.lon]}
-                                    radius={500}
+                                    radius={1000}
                                     pathOptions={{
                                         color: getStatusColor(dispatch.status),
                                         fillColor: getStatusColor(dispatch.status),
-                                        fillOpacity: 0.2
+                                        fillOpacity: 0.3,
+                                        weight: 2
                                     }}
                                 />
 
-                                {/* Routes from each dispatch center */}
-                                {dispatch.dispatchDetails?.centers?.map((center, idx) => (
-                                    <React.Fragment key={`${dispatch.emergencyId}-${idx}`}>
-                                        {/* Center Marker */}
-                                        {center.route?.waypoints && center.route.waypoints.length > 0 && (
-                                            <>
-                                                <Marker 
-                                                    position={[
-                                                        center.route.waypoints[0].lat,
-                                                        center.route.waypoints[0].lon
-                                                    ]}
-                                                >
-                                                    <Popup>
-                                                        <div className="map-popup">
-                                                            <strong>{center.centerName}</strong>
-                                                            <p>Distance: {center.route.distance?.toFixed(2)} km</p>
-                                                            <p>Duration: {Math.round(center.route.duration)} min</p>
-                                                            <p>Resources: {center.resources?.length || 0} items</p>
-                                                        </div>
-                                                    </Popup>
-                                                </Marker>
+                                {/* Route polylines and dispatch center markers */}
+                                {dispatch.dispatchDetails?.centers?.map((center, idx) => {
+                                    const waypoints = center.route?.waypoints;
+                                    const routeColor = getStatusColor(dispatch.status);
+                                    const isDashed = dispatch.status === 'dispatched';
 
-                                                {/* Route Polyline */}
-                                                <Polyline
-                                                    positions={center.route.waypoints.map(wp => [wp.lat, wp.lon])}
-                                                    pathOptions={{
-                                                        color: getStatusColor(dispatch.status),
-                                                        weight: 3,
-                                                        opacity: 0.7,
-                                                        dashArray: dispatch.status === 'dispatched' ? '10, 10' : null
-                                                    }}
-                                                />
-                                            </>
-                                        )}
-                                    </React.Fragment>
-                                ))}
+                                    // Get center coordinates
+                                    const centerCoords = {
+                                        'Emergency Response Center Alpha': [30.7271, 76.8637],
+                                        'Fire Station Beta': [30.7071, 76.8437],
+                                        'Medical Response Unit Gamma': [30.7221, 76.8487],
+                                        'Chandigarh Emergency Response Center': [30.7333, 76.7794]
+                                    };
+                                    
+                                    const startPos = waypoints && waypoints.length > 0 
+                                        ? [waypoints[0].lat, waypoints[0].lon]
+                                        : (centerCoords[center.centerName] || [30.7171, 76.8537]);
+                                    const endPos = [dispatch.location.lat, dispatch.location.lon];
+
+                                    // Build route positions
+                                    const routePositions = waypoints && waypoints.length > 0
+                                        ? waypoints.map(wp => [wp.lat, wp.lon])
+                                        : [startPos, endPos];
+
+                                    return (
+                                        <React.Fragment key={`${dispatch.emergencyId}-route-${idx}`}>
+                                            {/* Point A: Dispatch Center Marker */}
+                                            <Marker position={startPos}>
+                                                <Popup>
+                                                    <div className="map-popup">
+                                                        <strong>📦 {center.centerName}</strong>
+                                                        <p>Distance: {center.route?.distance?.toFixed(2) || 'N/A'} km</p>
+                                                        <p>Duration: {Math.round(center.route?.duration || 0)} min</p>
+                                                        <p>Resources: {center.resources?.length || 0} items</p>
+                                                    </div>
+                                                </Popup>
+                                            </Marker>
+
+                                            {/* Route Line from A to B */}
+                                            <Polyline
+                                                positions={routePositions}
+                                                pathOptions={{
+                                                    color: routeColor,
+                                                    weight: 4,
+                                                    opacity: 0.8,
+                                                    dashArray: isDashed ? '10, 10' : null
+                                                }}
+                                            />
+                                        </React.Fragment>
+                                    );
+                                })}
                             </React.Fragment>
                         ))}
                     </MapContainer>
@@ -374,6 +399,15 @@ const DispatchTracker = () => {
                         <div className="legend-item">
                             <div className="legend-marker" style={{ backgroundColor: '#10B981' }} />
                             <span>Delivered</span>
+                        </div>
+                        <div className="legend-divider"></div>
+                        <div className="legend-item">
+                            <div className="legend-line dashed" style={{ backgroundColor: '#F59E0B' }} />
+                            <span>Pending Route</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-line solid" style={{ backgroundColor: '#3B82F6' }} />
+                            <span>Active Route</span>
                         </div>
                     </div>
                 </div>

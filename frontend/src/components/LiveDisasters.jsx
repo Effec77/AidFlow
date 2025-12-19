@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import axios from 'axios';
 import { 
     AlertTriangle, 
@@ -12,15 +13,41 @@ import {
     Activity,
     Package,
     TrendingUp,
-    Navigation
+    Navigation,
+    Globe,
+    Radio,
+    Download,
+    RefreshCw,
+    Filter,
+    Flame,
+    CloudLightning,
+    Mountain
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import '../css/LiveDisasters.css';
 
+// Fix for default marker icons in Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Component to handle map center changes
+const MapCenterHandler = ({ center }) => {
+    const map = useMap();
+    useEffect(() => {
+        map.setView(center, map.getZoom());
+    }, [center, map]);
+    return null;
+};
+
 /**
  * Live Disasters Dashboard
  * Real-time disaster monitoring integrated with Emergency & Dispatch systems
+ * Now with LIVE feeds from USGS Earthquakes and NASA EONET
  */
 const LiveDisasters = () => {
     const navigate = useNavigate();
@@ -30,7 +57,22 @@ const LiveDisasters = () => {
     const [inventoryImpact, setInventoryImpact] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [mapCenter, setMapCenter] = useState([30.7171, 76.8537]); // Default: Chandigarh
+    const [mapCenter, setMapCenter] = useState([22.5, 82.5]); // India center
+    const [mapZoom, setMapZoom] = useState(2);
+    
+    // Live feed state
+    const [activeTab, setActiveTab] = useState('live'); // 'live' or 'local'
+    const [liveDisasters, setLiveDisasters] = useState([]);
+    const [liveLoading, setLiveLoading] = useState(false);
+    const [liveStats, setLiveStats] = useState({ earthquakes: 0, naturalEvents: 0, total: 0 });
+    const [selectedLiveDisaster, setSelectedLiveDisaster] = useState(null);
+    const [liveFilters, setLiveFilters] = useState({
+        minMagnitude: 2.5,  // Lower threshold for India region
+        days: 30,           // Longer time range
+        types: ['earthquake', 'fire', 'storm', 'volcano', 'flood'],
+        indiaOnly: true     // Filter to India only
+    });
+    const [lastUpdated, setLastUpdated] = useState(null);
     
     const [newDisaster, setNewDisaster] = useState({
         name: '',
@@ -47,16 +89,123 @@ const LiveDisasters = () => {
         fetchDisasters();
         fetchAnalytics();
         fetchInventoryImpact();
+        fetchLiveDisasters();
         
         // Refresh every 30 seconds
         const interval = setInterval(() => {
             fetchDisasters();
             fetchAnalytics();
             fetchInventoryImpact();
+            if (activeTab === 'live') {
+                fetchLiveDisasters();
+            }
         }, 30000);
 
         return () => clearInterval(interval);
     }, []);
+
+    // Fetch live disasters when filters change
+    useEffect(() => {
+        if (activeTab === 'live') {
+            fetchLiveDisasters();
+        }
+    }, [liveFilters, activeTab]);
+
+    const fetchLiveDisasters = async () => {
+        setLiveLoading(true);
+        try {
+            const response = await axios.get('http://localhost:5000/api/disasters/live', {
+                params: {
+                    minMagnitude: liveFilters.minMagnitude,
+                    days: liveFilters.days
+                }
+            });
+            
+            if (response.data.success) {
+                // Filter by selected types and optionally by India
+                let filtered = response.data.disasters.filter(d => 
+                    liveFilters.types.includes(d.type)
+                );
+                
+                // Apply India-only filter if enabled
+                if (liveFilters.indiaOnly) {
+                    filtered = filtered.filter(d => {
+                        const place = (d.place || d.title || '').toLowerCase();
+                        return place.includes('india') || 
+                               place.includes('delhi') ||
+                               place.includes('mumbai') ||
+                               place.includes('chennai') ||
+                               place.includes('kolkata') ||
+                               place.includes('bangalore') ||
+                               place.includes('hyderabad') ||
+                               place.includes('kashmir') ||
+                               place.includes('gujarat') ||
+                               place.includes('rajasthan') ||
+                               place.includes('punjab') ||
+                               place.includes('uttarakhand') ||
+                               place.includes('himachal') ||
+                               place.includes('assam') ||
+                               place.includes('bihar') ||
+                               place.includes('odisha') ||
+                               place.includes('andaman');
+                    });
+                }
+                
+                setLiveDisasters(filtered);
+                setLiveStats({
+                    earthquakes: liveFilters.indiaOnly ? filtered.filter(d => d.type === 'earthquake').length : response.data.earthquakes,
+                    naturalEvents: liveFilters.indiaOnly ? filtered.filter(d => d.type !== 'earthquake').length : response.data.naturalEvents,
+                    total: filtered.length
+                });
+                setLastUpdated(new Date(response.data.lastUpdated));
+            }
+        } catch (error) {
+            console.error('Failed to fetch live disasters:', error);
+        } finally {
+            setLiveLoading(false);
+        }
+    };
+
+    const importLiveDisaster = async (disaster) => {
+        try {
+            const response = await axios.post(`http://localhost:5000/api/disasters/live/import/${disaster.id}`, {
+                disaster
+            });
+            
+            if (response.data.success) {
+                alert(`✅ Imported: ${disaster.title}\nZone ID: ${response.data.zone.zoneId}`);
+                fetchDisasters();
+                fetchAnalytics();
+            }
+        } catch (error) {
+            if (error.response?.data?.error?.includes('already been imported')) {
+                alert('⚠️ This disaster has already been imported to local zones.');
+            } else {
+                console.error('Failed to import disaster:', error);
+                alert('Failed to import disaster: ' + (error.response?.data?.error || error.message));
+            }
+        }
+    };
+
+    const createEmergencyFromLive = async (disaster) => {
+        try {
+            const response = await axios.post('http://localhost:5000/api/emergency/request', {
+                lat: disaster.location.lat,
+                lon: disaster.location.lon,
+                message: `LIVE ALERT: ${disaster.title}. ${disaster.type.toUpperCase()} detected. Severity: ${disaster.severity}. Source: ${disaster.source}`,
+                userId: 'live_disaster_system',
+                address: disaster.place || disaster.title
+            });
+
+            if (response.data.success) {
+                alert(`🚨 Emergency ${response.data.emergencyId} created from live disaster!\nRedirecting to Emergency Dashboard...`);
+                navigate('/emergency-dashboard');
+            }
+        } catch (error) {
+            console.error('Failed to create emergency:', error);
+            alert('Failed to create emergency: ' + (error.response?.data?.error || error.message));
+        }
+    };
 
     const fetchDisasters = async () => {
         try {
@@ -176,9 +325,33 @@ const LiveDisasters = () => {
             storm: '⛈️',
             landslide: '🏔️',
             drought: '🏜️',
-            cyclone: '🌀'
+            cyclone: '🌀',
+            volcano: '🌋',
+            ice: '🧊',
+            dust: '💨',
+            extreme_temp: '🌡️',
+            water_event: '💧',
+            other: '⚠️'
         };
         return icons[type] || '⚠️';
+    };
+
+    const getTimeAgo = (date) => {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        if (seconds < 60) return `${seconds}s ago`;
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `${days}d ago`;
+    };
+
+    const getMagnitudeColor = (magnitude) => {
+        if (magnitude >= 7.0) return '#DC2626';
+        if (magnitude >= 6.0) return '#EA580C';
+        if (magnitude >= 5.0) return '#D97706';
+        return '#65A30D';
     };
 
     const getResourcesForDisasterType = (type) => {
@@ -245,7 +418,7 @@ const LiveDisasters = () => {
                     <Activity className="header-icon" />
                     <div>
                         <h2>🌍 Live Disasters Dashboard</h2>
-                        <p>Real-time disaster monitoring and emergency coordination</p>
+                        <p>Real-time disaster monitoring from USGS & NASA</p>
                     </div>
                 </div>
                 <div className="header-actions">
@@ -273,8 +446,146 @@ const LiveDisasters = () => {
                 </div>
             </div>
 
+            {/* Tab Navigation */}
+            <div className="tab-navigation">
+                <button 
+                    className={`tab-btn ${activeTab === 'live' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('live')}
+                >
+                    <Radio size={18} />
+                    <span>Live Feed</span>
+                    <span className="tab-badge">{liveStats.total}</span>
+                </button>
+                <button 
+                    className={`tab-btn ${activeTab === 'local' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('local')}
+                >
+                    <MapPin size={18} />
+                    <span>Local Zones</span>
+                    <span className="tab-badge">{disasters.filter(d => d.status === 'active').length}</span>
+                </button>
+                {activeTab === 'live' && (
+                    <div className="live-controls">
+                        <button 
+                            className="refresh-btn"
+                            onClick={fetchLiveDisasters}
+                            disabled={liveLoading}
+                        >
+                            <RefreshCw size={16} className={liveLoading ? 'spinning' : ''} />
+                            Refresh
+                        </button>
+                        {lastUpdated && (
+                            <span className="last-updated">
+                                Updated: {getTimeAgo(lastUpdated)}
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Live Feed Filters */}
+            {activeTab === 'live' && (
+                <div className="live-filters">
+                    <div className="filter-group">
+                        <label><Filter size={14} /> Min Magnitude:</label>
+                        <select 
+                            value={liveFilters.minMagnitude}
+                            onChange={(e) => setLiveFilters({...liveFilters, minMagnitude: parseFloat(e.target.value)})}
+                        >
+                            <option value="2.0">2.0+</option>
+                            <option value="2.5">2.5+</option>
+                            <option value="3.0">3.0+</option>
+                            <option value="4.0">4.0+</option>
+                            <option value="5.0">5.0+</option>
+                        </select>
+                    </div>
+                    <div className="filter-group">
+                        <label>Time Range:</label>
+                        <select 
+                            value={liveFilters.days}
+                            onChange={(e) => setLiveFilters({...liveFilters, days: parseInt(e.target.value)})}
+                        >
+                            <option value="1">Last 24 hours</option>
+                            <option value="7">Last 7 days</option>
+                            <option value="14">Last 14 days</option>
+                            <option value="30">Last 30 days</option>
+                        </select>
+                    </div>
+                    <div className="filter-group type-filters">
+                        <label>Types:</label>
+                        <div className="type-checkboxes">
+                            {['earthquake', 'fire', 'storm', 'volcano', 'flood'].map(type => (
+                                <label key={type} className="type-checkbox">
+                                    <input 
+                                        type="checkbox"
+                                        checked={liveFilters.types.includes(type)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setLiveFilters({...liveFilters, types: [...liveFilters.types, type]});
+                                            } else {
+                                                setLiveFilters({...liveFilters, types: liveFilters.types.filter(t => t !== type)});
+                                            }
+                                        }}
+                                    />
+                                    {getTypeIcon(type)} {type}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="filter-group india-filter">
+                        <label className="india-toggle">
+                            <input 
+                                type="checkbox"
+                                checked={liveFilters.indiaOnly}
+                                onChange={(e) => setLiveFilters({...liveFilters, indiaOnly: e.target.checked})}
+                            />
+                            🇮🇳 India Only
+                        </label>
+                    </div>
+                </div>
+            )}
+
             {/* Analytics Cards */}
-            {analytics && (
+            {activeTab === 'live' ? (
+                <div className="analytics-grid">
+                    <div className="analytics-card critical">
+                        <div className="card-icon">
+                            <Globe size={24} />
+                        </div>
+                        <div className="card-content">
+                            <h3>{liveStats.total}</h3>
+                            <p>Live Events</p>
+                        </div>
+                    </div>
+                    <div className="analytics-card warning">
+                        <div className="card-icon">
+                            <Mountain size={24} />
+                        </div>
+                        <div className="card-content">
+                            <h3>{liveStats.earthquakes}</h3>
+                            <p>Earthquakes</p>
+                        </div>
+                    </div>
+                    <div className="analytics-card info">
+                        <div className="card-icon">
+                            <Flame size={24} />
+                        </div>
+                        <div className="card-content">
+                            <h3>{liveStats.naturalEvents}</h3>
+                            <p>Natural Events</p>
+                        </div>
+                    </div>
+                    <div className="analytics-card success">
+                        <div className="card-icon">
+                            <Radio size={24} />
+                        </div>
+                        <div className="card-content">
+                            <h3>LIVE</h3>
+                            <p>USGS + NASA</p>
+                        </div>
+                    </div>
+                </div>
+            ) : analytics && (
                 <div className="analytics-grid">
                     <div className="analytics-card critical">
                         <div className="card-icon">
@@ -318,83 +629,174 @@ const LiveDisasters = () => {
             <div className="disasters-content">
                 {/* Disasters List */}
                 <div className="disasters-list">
-                    <h3>Active Disaster Zones ({activeDisasters.length})</h3>
-                    {activeDisasters.length === 0 ? (
-                        <div className="no-disasters">
-                            <CheckCircle className="empty-icon" />
-                            <p>No active disasters</p>
-                        </div>
+                    {activeTab === 'live' ? (
+                        <>
+                            <h3>
+                                <Radio size={18} className="live-indicator" />
+                                Live Disasters ({liveDisasters.length})
+                            </h3>
+                            {liveLoading ? (
+                                <div className="no-disasters">
+                                    <RefreshCw className="empty-icon spinning" />
+                                    <p>Fetching live data...</p>
+                                </div>
+                            ) : liveDisasters.length === 0 ? (
+                                <div className="no-disasters">
+                                    <CheckCircle className="empty-icon" />
+                                    <p>No disasters matching filters</p>
+                                </div>
+                            ) : (
+                                liveDisasters.map((disaster) => (
+                                    <div
+                                        key={disaster.id}
+                                        className={`disaster-card live-card ${selectedLiveDisaster?.id === disaster.id ? 'selected' : ''}`}
+                                        onClick={() => {
+                                            setSelectedLiveDisaster(disaster);
+                                            setSelectedDisaster(null);
+                                            setMapCenter([disaster.location.lat, disaster.location.lon]);
+                                        }}
+                                    >
+                                        <div className="disaster-header">
+                                            <div className="disaster-type">
+                                                <span className="type-icon">{getTypeIcon(disaster.type)}</span>
+                                                <span className="type-name">{disaster.type}</span>
+                                            </div>
+                                            <div 
+                                                className="severity-badge"
+                                                style={{ backgroundColor: getSeverityColor(disaster.severity) }}
+                                            >
+                                                {disaster.severity}
+                                            </div>
+                                        </div>
+                                        <h4>{disaster.title}</h4>
+                                        {disaster.magnitude && (
+                                            <div className="magnitude-display" style={{ color: getMagnitudeColor(disaster.magnitude) }}>
+                                                <strong>M{disaster.magnitude.toFixed(1)}</strong>
+                                                {disaster.location.depth && <span> • Depth: {disaster.location.depth.toFixed(1)}km</span>}
+                                            </div>
+                                        )}
+                                        <div className="disaster-stats">
+                                            <div className="stat">
+                                                <MapPin size={16} />
+                                                <span>{disaster.place || `${disaster.location.lat.toFixed(2)}, ${disaster.location.lon.toFixed(2)}`}</span>
+                                            </div>
+                                            <div className="stat">
+                                                <Clock size={16} />
+                                                <span>{getTimeAgo(disaster.time)}</span>
+                                            </div>
+                                            <div className="stat source-badge">
+                                                <Globe size={14} />
+                                                <span>{disaster.source}</span>
+                                            </div>
+                                        </div>
+                                        <div className="disaster-actions">
+                                            <button 
+                                                className="action-btn emergency-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    createEmergencyFromLive(disaster);
+                                                }}
+                                            >
+                                                <Zap size={16} />
+                                                Create Emergency
+                                            </button>
+                                            <button 
+                                                className="action-btn import-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    importLiveDisaster(disaster);
+                                                }}
+                                            >
+                                                <Download size={16} />
+                                                Import
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </>
                     ) : (
-                        activeDisasters.map((disaster) => {
-                            const type = getDisasterProp(disaster, 'type');
-                            const lat = getDisasterProp(disaster, 'lat');
-                            const lon = getDisasterProp(disaster, 'lon');
-                            const address = getDisasterProp(disaster, 'address');
-                            const affectedPop = getDisasterProp(disaster, 'affectedPopulation');
-                            const description = getDisasterProp(disaster, 'description');
-                            
-                            return (
-                            <div
-                                key={disaster.zoneId}
-                                className={`disaster-card ${selectedDisaster?.zoneId === disaster.zoneId ? 'selected' : ''}`}
-                                onClick={() => {
-                                    setSelectedDisaster(disaster);
-                                    setMapCenter([lat, lon]);
-                                }}
-                            >
-                                <div className="disaster-header">
-                                    <div className="disaster-type">
-                                        <span className="type-icon">{getTypeIcon(type)}</span>
-                                        <span className="type-name">{type}</span>
-                                    </div>
-                                    <div 
-                                        className="severity-badge"
-                                        style={{ backgroundColor: getSeverityColor(disaster.severity) }}
-                                    >
-                                        {disaster.severity}
-                                    </div>
+                        <>
+                            <h3>Active Disaster Zones ({activeDisasters.length})</h3>
+                            {activeDisasters.length === 0 ? (
+                                <div className="no-disasters">
+                                    <CheckCircle className="empty-icon" />
+                                    <p>No active disasters</p>
                                 </div>
-                                <h4>{disaster.name}</h4>
-                                <p className="disaster-description">{description}</p>
-                                <div className="disaster-stats">
-                                    <div className="stat">
-                                        <MapPin size={16} />
-                                        <span>{address || 'Location set'}</span>
-                                    </div>
-                                    <div className="stat">
-                                        <Users size={16} />
-                                        <span>{affectedPop.toLocaleString()} affected</span>
-                                    </div>
-                                    <div className="stat">
-                                        <Clock size={16} />
-                                        <span>{new Date(disaster.createdAt).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-                                <div className="disaster-actions">
-                                    <button 
-                                        className="action-btn emergency-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            createEmergencyFromDisaster(disaster);
+                            ) : (
+                                activeDisasters.map((disaster) => {
+                                    const type = getDisasterProp(disaster, 'type');
+                                    const lat = getDisasterProp(disaster, 'lat');
+                                    const lon = getDisasterProp(disaster, 'lon');
+                                    const address = getDisasterProp(disaster, 'address');
+                                    const affectedPop = getDisasterProp(disaster, 'affectedPopulation');
+                                    const description = getDisasterProp(disaster, 'description');
+                                    
+                                    return (
+                                    <div
+                                        key={disaster.zoneId}
+                                        className={`disaster-card ${selectedDisaster?.zoneId === disaster.zoneId ? 'selected' : ''}`}
+                                        onClick={() => {
+                                            setSelectedDisaster(disaster);
+                                            setSelectedLiveDisaster(null);
+                                            setMapCenter([lat, lon]);
                                         }}
                                     >
-                                        <Zap size={16} />
-                                        Create Emergency
-                                    </button>
-                                    <button 
-                                        className="action-btn resolve-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            resolveDisaster(disaster.zoneId);
-                                        }}
-                                    >
-                                        <CheckCircle size={16} />
-                                        Resolve
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                        })
+                                        <div className="disaster-header">
+                                            <div className="disaster-type">
+                                                <span className="type-icon">{getTypeIcon(type)}</span>
+                                                <span className="type-name">{type}</span>
+                                            </div>
+                                            <div 
+                                                className="severity-badge"
+                                                style={{ backgroundColor: getSeverityColor(disaster.severity) }}
+                                            >
+                                                {disaster.severity}
+                                            </div>
+                                        </div>
+                                        <h4>{disaster.name}</h4>
+                                        <p className="disaster-description">{description}</p>
+                                        <div className="disaster-stats">
+                                            <div className="stat">
+                                                <MapPin size={16} />
+                                                <span>{address || 'Location set'}</span>
+                                            </div>
+                                            <div className="stat">
+                                                <Users size={16} />
+                                                <span>{affectedPop.toLocaleString()} affected</span>
+                                            </div>
+                                            <div className="stat">
+                                                <Clock size={16} />
+                                                <span>{new Date(disaster.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                        <div className="disaster-actions">
+                                            <button 
+                                                className="action-btn emergency-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    createEmergencyFromDisaster(disaster);
+                                                }}
+                                            >
+                                                <Zap size={16} />
+                                                Create Emergency
+                                            </button>
+                                            <button 
+                                                className="action-btn resolve-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    resolveDisaster(disaster.zoneId);
+                                                }}
+                                            >
+                                                <CheckCircle size={16} />
+                                                Resolve
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                                })
+                            )}
+                        </>
                     )}
                 </div>
 
@@ -402,14 +804,59 @@ const LiveDisasters = () => {
                 <div className="disasters-map">
                     <MapContainer
                         center={mapCenter}
-                        zoom={12}
+                        zoom={activeTab === 'live' ? 5 : 12}
                         style={{ height: '100%', width: '100%' }}
                     >
+                        <MapCenterHandler center={mapCenter} />
                         <TileLayer
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         />
-                        {activeDisasters.map((disaster) => {
+                        
+                        {/* Live Disasters Markers */}
+                        {activeTab === 'live' && liveDisasters.map((disaster) => (
+                            <React.Fragment key={disaster.id}>
+                                <Marker 
+                                    position={[disaster.location.lat, disaster.location.lon]}
+                                    eventHandlers={{
+                                        click: () => {
+                                            setSelectedLiveDisaster(disaster);
+                                            setSelectedDisaster(null);
+                                        }
+                                    }}
+                                >
+                                    <Popup>
+                                        <div className="map-popup">
+                                            <strong>{getTypeIcon(disaster.type)} {disaster.title}</strong>
+                                            {disaster.magnitude && (
+                                                <p style={{ color: getMagnitudeColor(disaster.magnitude), fontWeight: 'bold' }}>
+                                                    Magnitude: {disaster.magnitude.toFixed(1)}
+                                                </p>
+                                            )}
+                                            <p>Type: {disaster.type}</p>
+                                            <p>Severity: {disaster.severity}</p>
+                                            <p>Time: {getTimeAgo(disaster.time)}</p>
+                                            <p>Source: {disaster.source}</p>
+                                        </div>
+                                    </Popup>
+                                </Marker>
+                                <Circle
+                                    center={[disaster.location.lat, disaster.location.lon]}
+                                    radius={disaster.type === 'earthquake' ? 
+                                        Math.max(50000, (disaster.magnitude || 4) * 20000) : 
+                                        100000}
+                                    pathOptions={{
+                                        color: getSeverityColor(disaster.severity),
+                                        fillColor: getSeverityColor(disaster.severity),
+                                        fillOpacity: 0.15,
+                                        weight: 1
+                                    }}
+                                />
+                            </React.Fragment>
+                        ))}
+
+                        {/* Local Disaster Zones Markers */}
+                        {activeTab === 'local' && activeDisasters.map((disaster) => {
                             const lat = getDisasterProp(disaster, 'lat');
                             const lon = getDisasterProp(disaster, 'lon');
                             const type = getDisasterProp(disaster, 'type');
@@ -443,8 +890,115 @@ const LiveDisasters = () => {
                     </MapContainer>
                 </div>
 
-                {/* Detail Panel */}
-                {selectedDisaster && (
+                {/* Live Disaster Detail Panel */}
+                {selectedLiveDisaster && activeTab === 'live' && (
+                    <div className="disaster-detail live-detail">
+                        <div className="detail-header">
+                            <h3>{getTypeIcon(selectedLiveDisaster.type)} {selectedLiveDisaster.title}</h3>
+                            <button 
+                                className="close-detail"
+                                onClick={() => setSelectedLiveDisaster(null)}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="detail-content">
+                            <div className="detail-section">
+                                <h4>Event Information</h4>
+                                <p><strong>Type:</strong> {selectedLiveDisaster.type}</p>
+                                <p><strong>Severity:</strong> 
+                                    <span 
+                                        className="severity-inline"
+                                        style={{ color: getSeverityColor(selectedLiveDisaster.severity) }}
+                                    >
+                                        {selectedLiveDisaster.severity}
+                                    </span>
+                                </p>
+                                {selectedLiveDisaster.magnitude && (
+                                    <>
+                                        <p><strong>Magnitude:</strong> 
+                                            <span style={{ color: getMagnitudeColor(selectedLiveDisaster.magnitude), fontWeight: 'bold' }}>
+                                                {selectedLiveDisaster.magnitude.toFixed(1)}
+                                            </span>
+                                        </p>
+                                        {selectedLiveDisaster.location.depth && (
+                                            <p><strong>Depth:</strong> {selectedLiveDisaster.location.depth.toFixed(1)} km</p>
+                                        )}
+                                    </>
+                                )}
+                                <p><strong>Time:</strong> {new Date(selectedLiveDisaster.time).toLocaleString()}</p>
+                                <p><strong>Source:</strong> {selectedLiveDisaster.source}</p>
+                            </div>
+
+                            <div className="detail-section">
+                                <h4>Location</h4>
+                                <p><strong>Place:</strong> {selectedLiveDisaster.place || 'N/A'}</p>
+                                <p><strong>Coordinates:</strong> {selectedLiveDisaster.location.lat.toFixed(4)}, {selectedLiveDisaster.location.lon.toFixed(4)}</p>
+                            </div>
+
+                            {selectedLiveDisaster.tsunami && (
+                                <div className="detail-section tsunami-warning">
+                                    <h4>⚠️ Tsunami Warning</h4>
+                                    <p>This earthquake may have triggered a tsunami alert.</p>
+                                </div>
+                            )}
+
+                            {selectedLiveDisaster.url && (
+                                <div className="detail-section">
+                                    <h4>More Information</h4>
+                                    <a 
+                                        href={selectedLiveDisaster.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="external-link"
+                                    >
+                                        View on {selectedLiveDisaster.source} →
+                                    </a>
+                                </div>
+                            )}
+
+                            {selectedLiveDisaster.sources && selectedLiveDisaster.sources.length > 0 && (
+                                <div className="detail-section">
+                                    <h4>Data Sources</h4>
+                                    {selectedLiveDisaster.sources.map((source, idx) => (
+                                        <a 
+                                            key={idx}
+                                            href={source.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="external-link"
+                                        >
+                                            {source.id} →
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="detail-section">
+                                <h4>Quick Actions</h4>
+                                <div className="quick-actions">
+                                    <button 
+                                        className="quick-action emergency"
+                                        onClick={() => createEmergencyFromLive(selectedLiveDisaster)}
+                                    >
+                                        <Zap size={20} />
+                                        Create Emergency
+                                    </button>
+                                    <button 
+                                        className="quick-action import"
+                                        onClick={() => importLiveDisaster(selectedLiveDisaster)}
+                                    >
+                                        <Download size={20} />
+                                        Import to Local
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Local Disaster Detail Panel */}
+                {selectedDisaster && activeTab === 'local' && (
                     <div className="disaster-detail">
                         <div className="detail-header">
                             <h3>{selectedDisaster.name}</h3>

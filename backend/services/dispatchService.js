@@ -161,15 +161,35 @@ class DispatchService {
                 for (const center of centersWithDistance) {
                     if (remainingQuantity <= 0) break;
 
-                    // Find matching inventory items
+                    // Find matching inventory items - search by name or category
                     const category = this.mapResourceToCategory(resource.name);
-                    const availableItems = await InventoryItem.find({
+                    const resourceNameLower = resource.name.toLowerCase().replace(/_/g, ' ');
+                    
+                    // First try to find by exact/partial name match at this location
+                    let availableItems = await InventoryItem.find({
                         location: center.centerName,
-                        category: category,
+                        name: { $regex: resourceNameLower, $options: 'i' },
                         currentStock: { $gt: 0 }
                     });
                     
-                    console.log(`🔍 Looking for ${category} at ${center.centerName}: found ${availableItems.length} items`);
+                    // If no exact match, try by category
+                    if (availableItems.length === 0) {
+                        availableItems = await InventoryItem.find({
+                            location: center.centerName,
+                            category: category,
+                            currentStock: { $gt: 0 }
+                        });
+                    }
+                    
+                    // If still nothing, try searching all locations for this specific item
+                    if (availableItems.length === 0) {
+                        availableItems = await InventoryItem.find({
+                            name: { $regex: resourceNameLower, $options: 'i' },
+                            currentStock: { $gt: 0 }
+                        }).limit(1);
+                    }
+                    
+                    console.log(`🔍 Looking for "${resource.name}" (${category}) at ${center.centerName}: found ${availableItems.length} items`);
 
                     for (const item of availableItems) {
                         if (remainingQuantity <= 0) break;
