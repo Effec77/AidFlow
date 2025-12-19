@@ -33,6 +33,8 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+
+
 // ----------------- CONFIGURATION -----------------
 const CSV_FILE_PATH = path.join(__dirname, 'data', 'predictions_with_coords.csv');
 const INVENTORY_SEED_PATH = path.join(__dirname, 'data', 'inventory_seed');
@@ -313,6 +315,7 @@ app.use('/api', inventoryRoutes); // For /api/donations and /api/requests
 // **********************************************
 // ********* LIVE DISASTERS ROUTES **************
 // **********************************************
+
 app.use('/api/disasters', disastersRoutes);
 
 // **********************************************

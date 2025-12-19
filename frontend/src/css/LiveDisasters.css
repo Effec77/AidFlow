@@ -1065,3 +1065,297 @@ body.light .btn-primary:hover:not(:disabled) {
         justify-content: center;
     }
 }
+
+
+/* ========================================
+   LIVE FEED STYLES
+   ======================================== */
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    background: var(--secondary-bg);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--accent-color), #F59E0B);
+    color: #1a1a2e;
+}
+
+.tab-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.tab-btn.active .tab-badge {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.live-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto;
+}
+
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--secondary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+    background: var(--accent-color);
+    color: #1a1a2e;
+    border-color: var(--accent-color);
+}
+
+.refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.refresh-btn .spinning {
+    animation: spin 1s linear infinite;
+}
+
+.last-updated {
+    color: var(--muted-text);
+    font-size: 0.85rem;
+}
+
+/* Live Filters */
+.live-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    color: var(--muted-text);
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.filter-group select {
+    padding: 0.5rem 0.75rem;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.type-filters {
+    flex: 1;
+}
+
+.type-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.type-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    background: var(--secondary-bg);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.type-checkbox:hover {
+    background: var(--primary-bg);
+}
+
+.type-checkbox input {
+    cursor: pointer;
+}
+
+/* Live Disaster Cards */
+.live-card {
+    border-left: 4px solid var(--accent-color);
+}
+
+.live-indicator {
+    color: #EF4444;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.magnitude-display {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: var(--primary-bg);
+    border-radius: 6px;
+}
+
+.source-badge {
+    background: var(--primary-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem !important;
+}
+
+.action-btn.import-btn {
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    color: white;
+}
+
+.action-btn.import-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Live Detail Panel */
+.live-detail {
+    border-left: 4px solid var(--accent-color);
+}
+
+.tsunami-warning {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(239, 68, 68, 0.1));
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #DC2626;
+}
+
+.tsunami-warning h4 {
+    color: #EF4444 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.external-link {
+    display: inline-block;
+    color: var(--accent-color);
+    text-decoration: none;
+    padding: 0.5rem 0;
+    transition: all 0.2s ease;
+}
+
+.external-link:hover {
+    color: #F59E0B;
+    text-decoration: underline;
+}
+
+.quick-action.import {
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    color: white;
+}
+
+.quick-action.import:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Responsive for live features */
+@media (max-width: 768px) {
+    .tab-navigation {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .live-controls {
+        margin-left: 0;
+        justify-content: space-between;
+    }
+    
+    .live-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .type-checkboxes {
+        justify-content: flex-start;
+    }
+}
+
+
+/* India Filter Toggle */
+.india-filter {
+    margin-left: auto;
+}
+
+.india-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #ff9933 0%, #ffffff 50%, #138808 100%);
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #1a1a2e;
+    transition: all 0.3s ease;
+}
+
+.india-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255, 153, 51, 0.4);
+}
+
+.india-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #138808;
+}

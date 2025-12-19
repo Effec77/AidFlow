@@ -360,3 +360,34 @@
         padding: 1rem 1.5rem;
     }
 }
+
+
+/* Track Dispatch Button */
+.track-dispatch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 24px;
+    margin-top: 16px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.track-dispatch-btn:hover {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.track-dispatch-btn .button-icon {
+    width: 20px;
+    height: 20px;
+}

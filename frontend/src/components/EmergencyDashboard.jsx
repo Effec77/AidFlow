@@ -3,6 +3,7 @@ import { AlertTriangle, MapPin, Clock, Users, TrendingUp, Activity, Navigation }
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DispatchControl from './DispatchControl';
+import '../css/Emergency.css';
 
 const EmergencyDashboard = () => {
     const navigate = useNavigate();
@@ -142,7 +143,7 @@ const EmergencyDashboard = () => {
                         <div className="card-content">
                             <h3>Critical Cases</h3>
                             <p className="card-number">
-                                {activeEmergencies.filter(e => e.aiAnalysis.severity === 'critical').length}
+                                {activeEmergencies.filter(e => e.aiAnalysis?.severity === 'critical').length}
                             </p>
                         </div>
                     </div>
@@ -175,15 +176,25 @@ const EmergencyDashboard = () => {
                                 className="emergency-card"
                                 onClick={() => setSelectedEmergency(emergency)}
                             >
+                                <button 
+                                    className="card-delete-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteEmergency(emergency.emergencyId);
+                                    }}
+                                    title="Delete Emergency"
+                                >
+                                    ×
+                                </button>
                                 <div className="emergency-header">
                                     <div className="emergency-id">
                                         {emergency.emergencyId}
                                     </div>
                                     <div 
                                         className="severity-badge"
-                                        style={{ backgroundColor: getSeverityColor(emergency.aiAnalysis.severity) }}
+                                        style={{ backgroundColor: getSeverityColor(emergency.aiAnalysis?.severity) }}
                                     >
-                                        {emergency.aiAnalysis.severity}
+                                        {emergency.aiAnalysis?.severity || 'unknown'}
                                     </div>
                                 </div>
 
@@ -200,7 +211,7 @@ const EmergencyDashboard = () => {
                                     
                                     <div className="disaster-info">
                                         <AlertTriangle className="info-icon" />
-                                        <span>{emergency.aiAnalysis.disaster.type} ({Math.round(emergency.aiAnalysis.disaster.confidence * 100)}% confidence)</span>
+                                        <span>{emergency.aiAnalysis?.disaster?.type || 'unknown'} ({emergency.aiAnalysis?.disaster?.confidence ? Math.round(emergency.aiAnalysis.disaster.confidence * 100) : 0}% confidence)</span>
                                     </div>
                                 </div>
 
@@ -250,129 +261,141 @@ const EmergencyDashboard = () => {
 
             {/* Emergency Detail Modal */}
             {selectedEmergency && (
-                <div className="emergency-modal" onClick={() => setSelectedEmergency(null)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>Emergency Details: {selectedEmergency.emergencyId}</h2>
-                            <button 
-                                className="close-btn"
-                                onClick={() => setSelectedEmergency(null)}
-                            >
-                                ×
-                            </button>
+                <div className="emergency-modal-overlay" onClick={() => setSelectedEmergency(null)}>
+                    <div className="emergency-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="emergency-modal-header">
+                            <h2>🚨 Emergency Details</h2>
+                            <span className="emergency-modal-id">{selectedEmergency.emergencyId}</span>
+                            <button className="emergency-modal-close" onClick={() => setSelectedEmergency(null)}>×</button>
                         </div>
 
-                        <div className="modal-body">
-                            <div className="detail-section">
-                                <h3>User Information</h3>
-                                <p><strong>User ID:</strong> {selectedEmergency.userId}</p>
-                                <p><strong>Location:</strong> {selectedEmergency.location.address}</p>
-                                <p><strong>Coordinates:</strong> {selectedEmergency.location.lat}, {selectedEmergency.location.lon}</p>
+                        <div className="emergency-modal-body">
+                            {/* User Information */}
+                            <div className="modal-section">
+                                <h3>📍 Location & User</h3>
+                                <div className="modal-section-content">
+                                    <p><strong>User ID:</strong> {selectedEmergency.userId || 'N/A'}</p>
+                                    <p><strong>Address:</strong> {selectedEmergency.location?.address || 'N/A'}</p>
+                                    <p><strong>Coordinates:</strong> {selectedEmergency.location?.lat?.toFixed(4) || 'N/A'}, {selectedEmergency.location?.lon?.toFixed(4) || 'N/A'}</p>
+                                </div>
                             </div>
 
-                            <div className="detail-section">
-                                <h3>AI Analysis</h3>
-                                <p><strong>Disaster Type:</strong> {selectedEmergency.aiAnalysis.disaster.type}</p>
-                                <p><strong>Confidence:</strong> {Math.round(selectedEmergency.aiAnalysis.disaster.confidence * 100)}%</p>
-                                <p><strong>Severity:</strong> {selectedEmergency.aiAnalysis.severity}</p>
-                                <p><strong>Urgency:</strong> {selectedEmergency.aiAnalysis.sentiment.urgency}</p>
+                            {/* AI Analysis */}
+                            <div className="modal-section">
+                                <h3>🤖 AI Analysis</h3>
+                                <div className="modal-section-content modal-grid">
+                                    <div className="modal-stat">
+                                        <span className="modal-stat-label">Disaster Type</span>
+                                        <span className="modal-stat-value">{selectedEmergency.aiAnalysis?.disaster?.type || 'Unknown'}</span>
+                                    </div>
+                                    <div className="modal-stat">
+                                        <span className="modal-stat-label">Confidence</span>
+                                        <span className="modal-stat-value">{selectedEmergency.aiAnalysis?.disaster?.confidence ? Math.round(selectedEmergency.aiAnalysis.disaster.confidence * 100) : 0}%</span>
+                                    </div>
+                                    <div className="modal-stat">
+                                        <span className="modal-stat-label">Severity</span>
+                                        <span className="modal-stat-value severity-tag" style={{ backgroundColor: getSeverityColor(selectedEmergency.aiAnalysis?.severity) }}>
+                                            {selectedEmergency.aiAnalysis?.severity || 'Unknown'}
+                                        </span>
+                                    </div>
+                                    <div className="modal-stat">
+                                        <span className="modal-stat-label">Urgency</span>
+                                        <span className="modal-stat-value">{selectedEmergency.aiAnalysis?.sentiment?.urgency || 'medium'}</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="detail-section">
-                                <h3>Resources Allocated</h3>
-                                <div className="resources-detail">
+                            {/* Resources */}
+                            <div className="modal-section">
+                                <h3>📦 Resources Required</h3>
+                                <div className="modal-section-content modal-resources-grid">
                                     <div>
                                         <strong>Immediate:</strong>
                                         <ul>
-                                            {selectedEmergency.response.resources.immediate.map((resource, index) => (
-                                                <li key={index}>{resource.replace(/_/g, ' ')}</li>
-                                            ))}
+                                            {selectedEmergency.response?.resources?.immediate?.length > 0 
+                                                ? selectedEmergency.response.resources.immediate.map((resource, index) => (
+                                                    <li key={index}>{String(resource).replace(/_/g, ' ')}</li>
+                                                ))
+                                                : <li>None specified</li>
+                                            }
                                         </ul>
                                     </div>
                                     <div>
                                         <strong>Secondary:</strong>
                                         <ul>
-                                            {selectedEmergency.response.resources.secondary.map((resource, index) => (
-                                                <li key={index}>{resource.replace(/_/g, ' ')}</li>
-                                            ))}
+                                            {selectedEmergency.response?.resources?.secondary?.length > 0
+                                                ? selectedEmergency.response.resources.secondary.map((resource, index) => (
+                                                    <li key={index}>{String(resource).replace(/_/g, ' ')}</li>
+                                                ))
+                                                : <li>None specified</li>
+                                            }
                                         </ul>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Show Dispatched Resources if available */}
+                            {/* Dispatched Resources */}
                             {selectedEmergency.dispatchDetails && (
-                                <div className="detail-section resources-provided">
-                                    <h3>✅ Resources Provided</h3>
-                                    <p className="dispatch-time">
-                                        <strong>Dispatched:</strong> {new Date(selectedEmergency.dispatchDetails.dispatchedAt).toLocaleString()}
-                                    </p>
-                                    <p className="dispatch-time">
-                                        <strong>ETA:</strong> {new Date(selectedEmergency.dispatchDetails.estimatedArrival).toLocaleTimeString()}
-                                    </p>
-                                    
-                                    <div className="centers-provided">
-                                        {selectedEmergency.dispatchDetails.centers?.map((center, idx) => (
-                                            <div key={idx} className="center-resources">
-                                                <h4>📦 {center.centerName}</h4>
-                                                <ul>
-                                                    {center.resources?.map((resource, ridx) => (
-                                                        <li key={ridx}>
-                                                            ✓ {resource.quantity} {resource.unit} of {resource.name}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                {center.route && (
-                                                    <p className="route-info">
-                                                        🚗 {center.route.distance?.toFixed(2)} km • {Math.round(center.route.duration)} min
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {selectedEmergency.dispatchDetails.deliveryNotes && (
-                                        <div className="delivery-notes">
-                                            <strong>Delivery Notes:</strong>
-                                            <p>{selectedEmergency.dispatchDetails.deliveryNotes}</p>
+                                <div className="modal-section modal-section-success">
+                                    <h3>✅ Resources Dispatched</h3>
+                                    <div className="modal-section-content">
+                                        <p><strong>Dispatched:</strong> {new Date(selectedEmergency.dispatchDetails.dispatchedAt).toLocaleString()}</p>
+                                        <p><strong>ETA:</strong> {new Date(selectedEmergency.dispatchDetails.estimatedArrival).toLocaleTimeString()}</p>
+                                        
+                                        <div className="modal-centers-grid">
+                                            {selectedEmergency.dispatchDetails.centers?.map((center, idx) => (
+                                                <div key={idx} className="modal-center-card">
+                                                    <h4>📦 {center.centerName}</h4>
+                                                    <ul>
+                                                        {center.resources?.map((resource, ridx) => (
+                                                            <li key={ridx}>✓ {resource.quantity} {resource.unit} - {resource.name}</li>
+                                                        ))}
+                                                    </ul>
+                                                    {center.route && (
+                                                        <p className="modal-route-info">🚗 {center.route.distance?.toFixed(2)} km • {Math.round(center.route.duration)} min</p>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             )}
 
-                            <div className="detail-section">
-                                <h3>Dispatch Control</h3>
-                                <DispatchControl 
-                                    emergency={selectedEmergency}
-                                    onDispatchComplete={(result) => {
-                                        console.log('Dispatch completed:', result);
-                                        fetchActiveEmergencies(); // Refresh list
-                                        // Update selected emergency with dispatch details
-                                        setSelectedEmergency({
-                                            ...selectedEmergency,
-                                            status: 'dispatched',
-                                            dispatchDetails: result.dispatch
-                                        });
-                                    }}
-                                />
-                            </div>
-
-                            <div className="detail-section">
-                                <h3>Timeline</h3>
-                                <div className="timeline">
-                                    {selectedEmergency.timeline.map((event, index) => (
-                                        <div key={index} className="timeline-event">
-                                            <div className="timeline-time">
-                                                {new Date(event.timestamp).toLocaleString()}
-                                            </div>
-                                            <div className="timeline-content">
-                                                <strong>{event.status}</strong>
-                                                {event.notes && <p>{event.notes}</p>}
-                                            </div>
-                                        </div>
-                                    ))}
+                            {/* Dispatch Control */}
+                            <div className="modal-section">
+                                <h3>🚀 Dispatch Control</h3>
+                                <div className="modal-section-content">
+                                    <DispatchControl 
+                                        emergency={selectedEmergency}
+                                        onDispatchComplete={(result) => {
+                                            fetchActiveEmergencies();
+                                            setSelectedEmergency({
+                                                ...selectedEmergency,
+                                                status: 'dispatched',
+                                                dispatchDetails: result.dispatch
+                                            });
+                                        }}
+                                    />
                                 </div>
                             </div>
+
+                            {/* Timeline */}
+                            {selectedEmergency.timeline && selectedEmergency.timeline.length > 0 && (
+                                <div className="modal-section">
+                                    <h3>📋 Timeline</h3>
+                                    <div className="modal-section-content">
+                                        <div className="modal-timeline">
+                                            {selectedEmergency.timeline.map((event, index) => (
+                                                <div key={index} className="modal-timeline-item">
+                                                    <div className="modal-timeline-time">{new Date(event.timestamp).toLocaleString()}</div>
+                                                    <div className="modal-timeline-status">{event.status}</div>
+                                                    {event.notes && <div className="modal-timeline-notes">{event.notes}</div>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Send, Package, MapPin, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Send, Package, MapPin, Clock, CheckCircle, AlertTriangle, Navigation } from 'lucide-react';
 import '../css/DispatchControl.css';
 
 /**
@@ -8,6 +9,7 @@ import '../css/DispatchControl.css';
  * One-click automated dispatch system
  */
 const DispatchControl = ({ emergency, onDispatchComplete }) => {
+    const navigate = useNavigate();
     const [dispatching, setDispatching] = useState(false);
     const [dispatchResult, setDispatchResult] = useState(null);
     const [error, setError] = useState(null);
@@ -119,6 +121,14 @@ const DispatchControl = ({ emergency, onDispatchComplete }) => {
                         </div>
                     </div>
                 )}
+
+                <button 
+                    className="track-dispatch-btn"
+                    onClick={() => navigate('/dispatch-tracker')}
+                >
+                    <Navigation className="button-icon" />
+                    <span>Track Dispatch Live</span>
+                </button>
             </div>
         );
     }

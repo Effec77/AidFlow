@@ -27,13 +27,66 @@ router.post('/request', async (req, res) => {
         const emergencyData = { lat, lon, message, timestamp: new Date() };
         const aiResponse = await aiAgent.processEmergencyRequest(emergencyData);
 
-        // Save to database
+        // Save to database - map NLP analysis to expected schema
+        const nlpData = aiResponse.analysis.nlp || {};
+        
+        // Extract emotion as string (handle various nested structures)
+        let emotionStr = 'neutral';
+        const emotionData = nlpData.sentiment?.emotion || nlpData.emotion;
+        if (typeof emotionData === 'string') {
+            emotionStr = emotionData;
+        } else if (emotionData?.primary?.label) {
+            // Handle { primary: { label: 'neutral', score: 0.5 } }
+            emotionStr = emotionData.primary.label;
+        } else if (typeof emotionData?.primary === 'string') {
+            emotionStr = emotionData.primary;
+        } else if (emotionData?.label) {
+            // Handle { label: 'neutral', score: 0 }
+            emotionStr = emotionData.label;
+        }
+        
+        // Extract urgency (can be nested in nlpData.urgency)
+        const urgencyLevel = nlpData.urgency?.level || 'medium';
+        const urgencyScore = nlpData.urgency?.score || 0.5;
+        
+        // Extract keywords as string array from entities object
+        let keywordsArr = [];
+        const entities = nlpData.entities || {};
+        
+        // Handle entities as object with locations/persons/etc arrays
+        if (entities && typeof entities === 'object' && !Array.isArray(entities)) {
+            ['locations', 'persons', 'organizations', 'miscellaneous'].forEach(key => {
+                if (Array.isArray(entities[key])) {
+                    entities[key].forEach(item => {
+                        if (typeof item === 'string') keywordsArr.push(item);
+                        else if (item?.word) keywordsArr.push(item.word);
+                        else if (item?.text) keywordsArr.push(item.text);
+                    });
+                }
+            });
+        } else if (Array.isArray(entities)) {
+            // Handle entities as array
+            entities.forEach(entity => {
+                if (typeof entity === 'string') keywordsArr.push(entity);
+                else if (entity?.word) keywordsArr.push(entity.word);
+            });
+        }
+        
         const emergency = new Emergency({
             emergencyId: aiResponse.emergencyId,
             userId,
             location: { lat, lon, address },
             userMessage: message,
-            aiAnalysis: aiResponse.analysis,
+            aiAnalysis: {
+                disaster: aiResponse.analysis.disaster,
+                sentiment: {
+                    urgency: urgencyLevel,
+                    emotion: emotionStr,
+                    keywords: keywordsArr,
+                    score: urgencyScore
+                },
+                severity: aiResponse.analysis.severity
+            },
             response: aiResponse.response,
             satelliteData: aiResponse.satelliteData || {},
             timeline: [{
@@ -467,7 +520,7 @@ router.get('/active-dispatches', async (req, res) => {
 
 /**
  * DELETE /api/emergency/:emergencyId
- * Delete a completed emergency
+ * Delete any emergency (admin action)
  */
 router.delete('/:emergencyId', async (req, res) => {
     try {
@@ -479,14 +532,6 @@ router.delete('/:emergencyId', async (req, res) => {
             return res.status(404).json({
                 success: false,
                 error: 'Emergency not found'
-            });
-        }
-
-        // Only allow deletion of completed emergencies
-        if (emergency.status !== 'completed' && emergency.status !== 'cancelled') {
-            return res.status(400).json({
-                success: false,
-                error: 'Can only delete completed or cancelled emergencies'
             });
         }
 
