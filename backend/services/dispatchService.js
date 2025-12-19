@@ -1,6 +1,7 @@
 import { InventoryItem, Location } from '../models/Inventory.js';
 import Emergency from '../models/Emergency.js';
 import RoutingService from './routingService.js';
+import RealisticTimingService from './realisticTimingService.js';
 import mongoose from 'mongoose'; // Import mongoose for transactions
 
 /**
@@ -11,6 +12,7 @@ import mongoose from 'mongoose'; // Import mongoose for transactions
 class DispatchService {
     constructor() {
         this.routingService = new RoutingService();
+        this.timingService = new RealisticTimingService();
     }
 
     /**
@@ -85,7 +87,7 @@ class DispatchService {
                     route: routes.find(r => r.centerId === c.centerId) || null // Ensure route matches schema
                 })),
                 totalResources: allocation.totalAllocated,
-                estimatedArrival: routes[0]?.route?.eta || new Date(Date.now() + 30 * 60000) // Access eta from route object
+                estimatedArrival: await this.calculateRealisticETA(allocation.centers[0], emergency.location, emergency.aiAnalysis?.disaster?.type, emergency.aiAnalysis?.severity)
             };
 
             await emergency.save({ session });
@@ -134,16 +136,10 @@ class DispatchService {
                 };
             }
 
-            // Mock coordinates for centers (in production, these would be in the database)
-            const centerCoordinates = {
-                'Emergency Response Center Alpha': { lat: 30.7271, lon: 76.8637 },
-                'Fire Station Beta': { lat: 30.7071, lon: 76.8437 },
-                'Medical Response Unit Gamma': { lat: 30.7221, lon: 76.8487 }
-            };
-
-            // Calculate distance to each center
+            // Calculate distance to each center using real coordinates from database
             const centersWithDistance = locations.map(loc => {
-                const coords = centerCoordinates[loc.name] || { lat: 30.7171, lon: 76.8537 };
+                // Use coordinates from the database location document
+                const coords = loc.coordinates || { lat: 30.7333, lon: 76.7794 }; // Fallback to Chandigarh center
                 return {
                     centerId: loc._id.toString(),
                     centerName: loc.name,
@@ -203,7 +199,8 @@ class DispatchService {
                             name: item.name,
                             category: item.category,
                             quantity: allocateQty,
-                            unit: item.unit
+                            unit: item.unit,
+                            locationName: item.location?.name || 'Unknown Location'
                         });
 
                         remainingQuantity -= allocateQty;
@@ -376,6 +373,34 @@ class DispatchService {
                 Math.sin(dLon/2) * Math.sin(dLon/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         return R * c;
+    }
+
+    /**
+     * Calculate realistic ETA using the timing service
+     */
+    async calculateRealisticETA(center, destination, emergencyType = 'general', severity = 'medium') {
+        try {
+            const timingResult = await this.timingService.calculateRealisticDispatchTime(
+                center.location,
+                destination,
+                emergencyType,
+                severity
+            );
+
+            if (timingResult.success) {
+                console.log(`🕐 Realistic ETA calculated: ${timingResult.estimatedTime} minutes from ${center.centerName}`);
+                return timingResult.estimatedArrival;
+            } else {
+                // Fallback calculation
+                const fallbackMinutes = Math.max(15, center.distance * 2); // 2 minutes per km minimum
+                return new Date(Date.now() + fallbackMinutes * 60000);
+            }
+        } catch (error) {
+            console.error('ETA calculation error:', error.message);
+            // Conservative fallback
+            const fallbackMinutes = Math.max(20, (center.distance || 10) * 2.5);
+            return new Date(Date.now() + fallbackMinutes * 60000);
+        }
     }
 
     /**

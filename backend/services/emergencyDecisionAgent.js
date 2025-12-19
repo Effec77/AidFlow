@@ -2,6 +2,7 @@ import Groq from 'groq-sdk';
 import { InventoryItem } from '../models/Inventory.js';
 import Emergency from '../models/Emergency.js';
 import mongoose from 'mongoose';
+import RealisticTimingService from './realisticTimingService.js';
 
 /**
  * LangChain-based Emergency Decision Agent with Groq
@@ -17,6 +18,9 @@ class EmergencyDecisionAgent {
         this.groq = this.groqApiKey ? new Groq({
             apiKey: this.groqApiKey,
         }) : null;
+
+        // Initialize realistic timing service
+        this.timingService = new RealisticTimingService();
 
         // Check if Groq is available
         this.groqAvailable = !!this.groqApiKey;
@@ -188,7 +192,7 @@ class EmergencyDecisionAgent {
                             name: item.name || 'Unknown Item',
                             category: item.category || 'General',
                             currentStock: item.currentStock || 0,
-                            location: item.location?.name || item.location || 'Unknown Location',
+                            locationName: item.location?.name || 'Unknown Location',
                             cost: item.cost || 0,
                             status: item.status || 'unknown'
                         }))
@@ -207,44 +211,15 @@ class EmergencyDecisionAgent {
 
         } catch (error) {
             console.error("❌ Inventory scan error:", error);
-            // Return mock inventory data for testing
+            // Return empty inventory analysis on error - no mock data
             return { 
                 error: error.message, 
-                totalItems: 5,
-                availableByCategory: {
-                    Medical: { count: 2, totalStock: 50, totalValue: 5000 },
-                    Food: { count: 1, totalStock: 100, totalValue: 2000 },
-                    Water: { count: 1, totalStock: 200, totalValue: 1000 },
-                    Equipment: { count: 1, totalStock: 10, totalValue: 15000 }
-                },
-                resourceMatches: [
-                    {
-                        resourceType: 'emergency_medical_kits',
-                        matchingItems: [{
-                            id: 'mock_medical_1',
-                            name: 'Emergency Medical Kit',
-                            category: 'Medical',
-                            currentStock: 25,
-                            location: 'Central Warehouse',
-                            cost: 100,
-                            status: 'available'
-                        }]
-                    },
-                    {
-                        resourceType: 'rescue_boats',
-                        matchingItems: [{
-                            id: 'mock_boat_1',
-                            name: 'Rescue Boat',
-                            category: 'Equipment',
-                            currentStock: 5,
-                            location: 'Emergency Station',
-                            cost: 5000,
-                            status: 'available'
-                        }]
-                    }
-                ],
+                totalItems: 0,
+                availableByCategory: {},
+                resourceMatches: [],
                 criticalShortages: [],
-                totalValue: 23000
+                totalValue: 0,
+                recommendations: ['Database connection issue - manual inventory check required']
             };
         }
     }
@@ -352,24 +327,24 @@ Respond with a JSON object containing:
                 } catch (parseError) {
                     console.warn("⚠️ Failed to parse Groq JSON response, using rule-based fallback");
                     console.warn("Response:", responseText.substring(0, 200) + "...");
-                    return this.makeRuleBasedDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis);
+                    return await this.makeRuleBasedDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis);
                 }
             } else {
                 // Fallback to rule-based decision
                 console.log("🔄 Using rule-based decision (Groq not available)");
-                return this.makeRuleBasedDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis);
+                return await this.makeRuleBasedDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis);
             }
         } catch (error) {
             console.error("❌ Groq decision error:", error);
             // Fallback to rule-based decision
-            return this.makeRuleBasedDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis);
+            return await this.makeRuleBasedDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis);
         }
     }
 
     /**
      * Rule-based fallback decision logic
      */
-    makeRuleBasedDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis) {
+    async makeRuleBasedDecision(emergencyData, bertAnalysis, inventoryAnalysis, contextAnalysis) {
         const confidence = bertAnalysis?.disaster?.confidence || 0.5;
         const severity = bertAnalysis?.severity || 'medium';
         const urgencyScore = contextAnalysis?.urgencyScore || 5;
@@ -412,7 +387,7 @@ Respond with a JSON object containing:
             confidence: shouldDispatch ? Math.min(confidence + 0.1, 1) : confidence,
             dispatchPlan: {
                 priority: severity,
-                estimatedResponseTime: this.calculateResponseTime(contextAnalysis),
+                estimatedResponseTime: await this.calculateResponseTime(emergencyData, bertAnalysis, contextAnalysis, inventoryAnalysis),
                 resourceAllocations,
                 totalEstimatedCost: totalCost,
                 riskAssessment: `${severity} severity emergency with ${Math.round(confidence * 100)}% confidence. Risk level: ${urgencyScore >= 8 ? 'High' : 'Medium'}`
@@ -477,7 +452,7 @@ Respond with a JSON object containing:
                         acc[alloc.itemName] = alloc.quantity;
                         return acc;
                     }, {}),
-                    estimatedArrival: new Date(Date.now() + dispatchPlan.estimatedResponseTime * 60000),
+                    estimatedArrival: dispatchPlan.estimatedResponseTime?.estimatedArrival || new Date(Date.now() + (dispatchPlan.estimatedResponseTime?.minutes || 30) * 60000),
                     deliveryNotes: "Autonomous dispatch by AI Emergency Decision Agent"
                 };
                 
@@ -494,7 +469,7 @@ Respond with a JSON object containing:
                 success: true,
                 dispatchResults,
                 totalItemsDispatched: dispatchResults.filter(r => r.dispatched).length,
-                estimatedArrival: new Date(Date.now() + dispatchPlan.estimatedResponseTime * 60000)
+                estimatedArrival: dispatchPlan.estimatedResponseTime?.estimatedArrival || new Date(Date.now() + (dispatchPlan.estimatedResponseTime?.minutes || 30) * 60000)
             };
 
         } catch (error) {
@@ -594,19 +569,128 @@ Respond with a JSON object containing:
         return Math.min(baseQuantity, item.currentStock, Math.floor(item.currentStock * 0.8));
     }
 
-    calculateResponseTime(contextAnalysis) {
+    async calculateResponseTime(emergencyData, bertAnalysis, contextAnalysis, inventoryAnalysis) {
+        try {
+            // Find the nearest response center with available resources
+            const nearestCenter = await this.findNearestResponseCenter(emergencyData.location, inventoryAnalysis);
+            
+            if (!nearestCenter) {
+                console.warn('⚠️ No response center found, using fallback calculation');
+                return this.getFallbackResponseTime(contextAnalysis);
+            }
+
+            // Use realistic timing service for accurate calculation
+            const timingResult = await this.timingService.calculateRealisticDispatchTime(
+                nearestCenter.location,
+                emergencyData.location,
+                bertAnalysis?.disaster?.type || 'general',
+                bertAnalysis?.severity || 'medium'
+            );
+
+            if (timingResult.success) {
+                console.log(`🕐 Realistic dispatch time: ${timingResult.estimatedTime} minutes (confidence: ${timingResult.confidence})`);
+                return {
+                    minutes: timingResult.estimatedTime,
+                    confidence: timingResult.confidence,
+                    breakdown: timingResult.breakdown,
+                    warnings: timingResult.warnings,
+                    estimatedArrival: timingResult.estimatedArrival,
+                    source: 'realistic_calculation'
+                };
+            } else {
+                return this.getFallbackResponseTime(contextAnalysis);
+            }
+        } catch (error) {
+            console.error('❌ Response time calculation error:', error.message);
+            return this.getFallbackResponseTime(contextAnalysis);
+        }
+    }
+
+    /**
+     * Find nearest response center with available resources
+     */
+    async findNearestResponseCenter(emergencyLocation, inventoryAnalysis) {
+        try {
+            // Get realistic response centers from timing service
+            const responseCenters = await this.timingService.getRealisticResponseCenters();
+            
+            // Calculate distances and find nearest with resources
+            let nearestCenter = null;
+            let minDistance = Infinity;
+
+            for (const [centerId, centerData] of Object.entries(responseCenters)) {
+                const distance = this.timingService.calculateHaversineDistance(
+                    emergencyLocation.lat, emergencyLocation.lon,
+                    centerData.lat, centerData.lon
+                );
+
+                // Check if this center has resources (from inventory analysis)
+                const hasResources = inventoryAnalysis.resourceMatches?.some(match => 
+                    match.matchingItems?.length > 0
+                );
+
+                if (distance < minDistance && hasResources) {
+                    minDistance = distance;
+                    nearestCenter = {
+                        id: centerId,
+                        name: centerData.name,
+                        type: centerData.type,
+                        location: { lat: centerData.lat, lon: centerData.lon },
+                        distance: distance
+                    };
+                }
+            }
+
+            // If no center with resources found, use the nearest one anyway
+            if (!nearestCenter) {
+                for (const [centerId, centerData] of Object.entries(responseCenters)) {
+                    const distance = this.timingService.calculateHaversineDistance(
+                        emergencyLocation.lat, emergencyLocation.lon,
+                        centerData.lat, centerData.lon
+                    );
+
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestCenter = {
+                            id: centerId,
+                            name: centerData.name,
+                            type: centerData.type,
+                            location: { lat: centerData.lat, lon: centerData.lon },
+                            distance: distance
+                        };
+                    }
+                }
+            }
+
+            return nearestCenter;
+        } catch (error) {
+            console.error('Error finding nearest response center:', error.message);
+            return null;
+        }
+    }
+
+    /**
+     * Fallback response time calculation
+     */
+    getFallbackResponseTime(contextAnalysis) {
         let baseTime = 30; // 30 minutes base
         
         // Adjust based on urgency
-        if (contextAnalysis.urgencyScore >= 9) baseTime = 15;
-        else if (contextAnalysis.urgencyScore >= 7) baseTime = 20;
+        if (contextAnalysis?.urgencyScore >= 9) baseTime = 15;
+        else if (contextAnalysis?.urgencyScore >= 7) baseTime = 20;
         
         // Time of day adjustment
-        if (contextAnalysis.timeOfDay < 6 || contextAnalysis.timeOfDay > 22) {
+        if (contextAnalysis?.timeOfDay < 6 || contextAnalysis?.timeOfDay > 22) {
             baseTime += 10; // Night time delay
         }
         
-        return baseTime;
+        return {
+            minutes: baseTime,
+            confidence: 'low',
+            source: 'fallback_calculation',
+            warnings: ['Using basic calculation - limited accuracy'],
+            estimatedArrival: new Date(Date.now() + baseTime * 60000)
+        };
     }
 }
 
