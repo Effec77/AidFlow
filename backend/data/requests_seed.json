@@ -1,0 +1,91 @@
+[
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Emergency Medical Kits",
+    "category": "Medical",
+    "quantity": 25,
+    "location": "Gurdaspur, Punjab",
+    "status": "pending",
+    "priority": "high",
+    "notes": "Urgent medical supplies needed for flood victims",
+    "timestamp": "2024-12-19T08:30:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Food Packets",
+    "category": "Food",
+    "quantity": 150,
+    "location": "Kapurthala, Punjab",
+    "status": "approved",
+    "priority": "high",
+    "notes": "For displaced families in temporary shelters",
+    "timestamp": "2024-12-18T12:15:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Blankets",
+    "category": "Shelter",
+    "quantity": 80,
+    "location": "Mansa, Punjab",
+    "status": "delivered",
+    "priority": "normal",
+    "notes": "Winter relief for affected communities",
+    "timestamp": "2024-12-17T14:20:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Water Purification Tablets",
+    "category": "Water",
+    "quantity": 100,
+    "location": "Sangrur, Punjab",
+    "status": "fulfilled",
+    "priority": "high",
+    "notes": "Water contamination reported in area",
+    "fulfilledAt": "2024-12-16T10:30:00.000Z",
+    "timestamp": "2024-12-15T09:45:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Portable Toilets",
+    "category": "Equipment",
+    "quantity": 15,
+    "location": "Hoshiarpur, Punjab",
+    "status": "pending",
+    "priority": "normal",
+    "notes": "Sanitation facilities for relief camp",
+    "timestamp": "2024-12-19T16:00:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Baby Formula",
+    "category": "Food",
+    "quantity": 40,
+    "location": "Nawanshahr, Punjab",
+    "status": "approved",
+    "priority": "high",
+    "notes": "Infant nutrition supplies urgently needed",
+    "timestamp": "2024-12-18T07:30:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Solar Lanterns",
+    "category": "Equipment",
+    "quantity": 50,
+    "location": "Faridkot, Punjab",
+    "status": "delivered",
+    "priority": "normal",
+    "notes": "Power outage in affected areas",
+    "timestamp": "2024-12-14T11:15:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Hygiene Kits",
+    "category": "Medical",
+    "quantity": 60,
+    "location": "Muktsar, Punjab",
+    "status": "rejected",
+    "priority": "low",
+    "notes": "Alternative supplies already distributed",
+    "timestamp": "2024-12-13T13:45:00.000Z"
+  }
+]

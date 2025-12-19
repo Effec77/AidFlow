@@ -25,7 +25,7 @@ const RecipientPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
-  const { token } = useContext(UserContext);
+  const { token, userId } = useContext(UserContext);
 
   const navigate = useNavigate();
 
@@ -42,7 +42,7 @@ const RecipientPage = () => {
     try {
       const [invRes, reqRes] = await Promise.all([
         authenticatedFetch(INVENTORY_API, {}, token),
-        authenticatedFetch(REQUEST_API, {}, token),
+        authenticatedFetch(`${REQUEST_API}`, {}, token),
       ]);
 
       const invData = await invRes.json();
@@ -78,6 +78,12 @@ const RecipientPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!userId) {
+      setError("User authentication required. Please log in again.");
+      return;
+    }
+    
     if (formData.quantity <= 0) {
       setError("Quantity must be greater than zero");
       return;
@@ -88,9 +94,14 @@ const RecipientPage = () => {
     setMessage('');
 
     try {
+      const requestData = {
+        ...formData,
+        requesterId: userId
+      };
+
       const response = await authenticatedFetch(REQUEST_API, {
         method: 'POST',
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestData),
       }, token);
 
       const result = await response.json();

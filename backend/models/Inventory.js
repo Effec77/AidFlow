@@ -64,8 +64,10 @@ const donationSchema = new mongoose.Schema({
     category: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1 },
     location: { type: String, required: true },
-    status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected', 'delivered'] },
+    status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected', 'delivered', 'fulfilled'] },
     priority: { type: String, default: 'normal', enum: ['low', 'normal', 'high'] },
+    notes: { type: String, default: '' },
+    fulfilledAt: { type: Date },
     timestamp: { type: Date, default: Date.now },
   }, { timestamps: true });
   

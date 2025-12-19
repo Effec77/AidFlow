@@ -188,8 +188,15 @@ router.post('/donations', async (req, res) => {
             });
         }
 
+        // Validate volunteerId is provided
+        if (!req.body.volunteerId) {
+            return res.status(400).json({ 
+                error: 'Volunteer ID is required for donation submission' 
+            });
+        }
+
         const donation = new Donation({
-            volunteerId: req.body.volunteerId || '000000000000000000000000', // Default volunteer ID
+            volunteerId: req.body.volunteerId,
             itemName,
             category,
             quantity: parseInt(quantity),
@@ -303,8 +310,15 @@ router.post('/requests', async (req, res) => {
             });
         }
 
+        // Validate requesterId is provided
+        if (!req.body.requesterId) {
+            return res.status(400).json({ 
+                error: 'Requester ID is required for request submission' 
+            });
+        }
+
         const request = new Request({
-            requesterId: req.body.requesterId || '000000000000000000000000', // Default requester ID
+            requesterId: req.body.requesterId,
             itemName,
             category,
             quantity: parseInt(quantity),

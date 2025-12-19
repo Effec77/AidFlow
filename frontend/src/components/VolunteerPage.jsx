@@ -24,7 +24,7 @@ const VolunteerPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState(null);
-  const { token } = useContext(UserContext);
+  const { token, userId } = useContext(UserContext);
 
   const navigate = useNavigate();
 
@@ -39,7 +39,7 @@ const VolunteerPage = () => {
     try {
       const [invRes, donRes] = await Promise.all([
         authenticatedFetch(INVENTORY_API, {}, token),
-        authenticatedFetch(DONATION_API, {}, token),
+        authenticatedFetch(`${DONATION_API}`, {}, token),
       ]);
       setInventory(await invRes.json());
       setDonations(await donRes.json());
@@ -61,17 +61,32 @@ const VolunteerPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!userId) {
+      setError("User authentication required. Please log in again.");
+      return;
+    }
+
     setIsLoading(true);
     setMessage("");
     setError(null);
 
     try {
+      const donationData = {
+        ...formData,
+        volunteerId: userId
+      };
+
       const res = await authenticatedFetch(DONATION_API, {
         method: "POST",
-        body: JSON.stringify(formData),
+        body: JSON.stringify(donationData),
       }, token);
 
-      if (!res.ok) throw new Error("Failed to donate");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to donate");
+      }
+      
       setMessage(`Donation for "${formData.itemName}" added!`);
       setFormData(initialFormData);
       fetchData();

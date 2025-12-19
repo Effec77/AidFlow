@@ -1,32 +1,42 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AlertTriangle, MapPin, Clock, Users, TrendingUp, Activity, Navigation } from 'lucide-react';
+import { AlertTriangle, MapPin, Clock, Users, TrendingUp, Activity, Navigation, Package, Edit, Trash2, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from './UserContext';
 import { createAuthenticatedAxios } from '../utils/api';
 import DispatchControl from './DispatchControl';
+import '../css/EmergencyDashboard.css';
 
 const EmergencyDashboard = () => {
     const navigate = useNavigate();
-    const { token } = useContext(UserContext);
+    const { token, userRole } = useContext(UserContext);
     const [activeEmergencies, setActiveEmergencies] = useState([]);
+    const [requests, setRequests] = useState([]);
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedEmergency, setSelectedEmergency] = useState(null);
+    const [activeTab, setActiveTab] = useState('emergencies');
+    const [editingRequest, setEditingRequest] = useState(null);
 
     useEffect(() => {
         if (token) {
             fetchActiveEmergencies();
             fetchAnalytics();
+            if (userRole === 'admin' || userRole === 'branch manager') {
+                fetchRequests();
+            }
             
             // Refresh every 30 seconds
             const interval = setInterval(() => {
                 fetchActiveEmergencies();
                 fetchAnalytics();
+                if (userRole === 'admin' || userRole === 'branch manager') {
+                    fetchRequests();
+                }
             }, 30000);
 
             return () => clearInterval(interval);
         }
-    }, [token]);
+    }, [token, userRole]);
 
     const fetchActiveEmergencies = async () => {
         try {
@@ -47,6 +57,16 @@ const EmergencyDashboard = () => {
         } catch (error) {
             console.error('Failed to fetch analytics:', error);
             setLoading(false);
+        }
+    };
+
+    const fetchRequests = async () => {
+        try {
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/admin/requests');
+            setRequests(response.data);
+        } catch (error) {
+            console.error('Failed to fetch requests:', error);
         }
     };
 
@@ -86,6 +106,35 @@ const EmergencyDashboard = () => {
         }
     };
 
+    const updateRequestStatus = async (requestId, status, notes = '') => {
+        try {
+            const api = createAuthenticatedAxios(token);
+            await api.put(`/api/admin/request/${requestId}`, { status, notes });
+            fetchRequests();
+            setEditingRequest(null);
+            alert('Request status updated successfully');
+        } catch (error) {
+            console.error('Failed to update request:', error);
+            alert(error.response?.data?.error || 'Failed to update request');
+        }
+    };
+
+    const deleteRequest = async (requestId) => {
+        if (!window.confirm('Are you sure you want to delete this request? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const api = createAuthenticatedAxios(token);
+            await api.delete(`/api/admin/request/${requestId}`);
+            fetchRequests();
+            alert('Request deleted successfully');
+        } catch (error) {
+            console.error('Failed to delete request:', error);
+            alert(error.response?.data?.error || 'Failed to delete request');
+        }
+    };
+
     const getSeverityColor = (severity) => {
         switch (severity) {
             case 'critical': return '#dc2626';
@@ -106,6 +155,26 @@ const EmergencyDashboard = () => {
         }
     };
 
+    const getRequestStatusColor = (status) => {
+        switch (status) {
+            case 'pending': return '#f59e0b';
+            case 'approved': return '#3b82f6';
+            case 'delivered': return '#10b981';
+            case 'fulfilled': return '#059669';
+            case 'rejected': return '#dc2626';
+            default: return '#6b7280';
+        }
+    };
+
+    const getPriorityColor = (priority) => {
+        switch (priority) {
+            case 'high': return '#dc2626';
+            case 'normal': return '#f59e0b';
+            case 'low': return '#10b981';
+            default: return '#6b7280';
+        }
+    };
+
     if (loading) {
         return <div className="loading">Loading emergency dashboard...</div>;
     }
@@ -117,13 +186,33 @@ const EmergencyDashboard = () => {
                     <h1>🚨 Emergency Response Dashboard</h1>
                     <p>AI-powered emergency management system</p>
                 </div>
-                <button 
-                    className="dispatch-tracker-btn"
-                    onClick={() => navigate('/dispatch-tracker')}
-                >
-                    <Navigation size={20} />
-                    <span>Live Dispatch Tracker</span>
-                </button>
+                <div className="header-actions">
+                    {(userRole === 'admin' || userRole === 'branch manager') && (
+                        <div className="tab-buttons">
+                            <button 
+                                className={`tab-btn ${activeTab === 'emergencies' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('emergencies')}
+                            >
+                                <AlertTriangle size={16} />
+                                Emergencies
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === 'requests' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('requests')}
+                            >
+                                <Package size={16} />
+                                Requests
+                            </button>
+                        </div>
+                    )}
+                    <button 
+                        className="dispatch-tracker-btn"
+                        onClick={() => navigate('/dispatch-tracker')}
+                    >
+                        <Navigation size={20} />
+                        <span>Live Dispatch Tracker</span>
+                    </button>
+                </div>
             </div>
 
             {/* Analytics Cards */}
@@ -168,8 +257,9 @@ const EmergencyDashboard = () => {
             )}
 
             {/* Active Emergencies List */}
-            <div className="emergencies-section">
-                <h2>Active Emergency Requests</h2>
+            {activeTab === 'emergencies' && (
+                <div className="emergencies-section">
+                    <h2>Active Emergency Requests</h2>
                 
                 {activeEmergencies.length === 0 ? (
                     <div className="no-emergencies">
@@ -254,7 +344,119 @@ const EmergencyDashboard = () => {
                         ))}
                     </div>
                 )}
-            </div>
+                </div>
+            )}
+
+            {/* Requests Management Section */}
+            {activeTab === 'requests' && (userRole === 'admin' || userRole === 'branch manager') && (
+                <div className="requests-section">
+                    <h2>Resource Requests Management</h2>
+                    
+                    {requests.length === 0 ? (
+                        <div className="no-requests">
+                            <p>No resource requests at the moment.</p>
+                        </div>
+                    ) : (
+                        <div className="requests-grid">
+                            {requests.map((request) => (
+                                <div key={request._id} className="request-card">
+                                    <div className="request-header">
+                                        <div className="request-info">
+                                            <h3>{request.itemName}</h3>
+                                            <p className="requester-info">
+                                                By: {request.requesterId?.firstName} {request.requesterId?.lastName} 
+                                                ({request.requesterId?.username})
+                                            </p>
+                                        </div>
+                                        <div className="request-badges">
+                                            <div 
+                                                className="priority-badge"
+                                                style={{ backgroundColor: getPriorityColor(request.priority) }}
+                                            >
+                                                {request.priority}
+                                            </div>
+                                            <div 
+                                                className="status-badge"
+                                                style={{ backgroundColor: getRequestStatusColor(request.status) }}
+                                            >
+                                                {request.status}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="request-details">
+                                        <div className="detail-item">
+                                            <Package className="detail-icon" />
+                                            <span>{request.quantity} units • {request.category}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <MapPin className="detail-icon" />
+                                            <span>{request.location}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <Clock className="detail-icon" />
+                                            <span>{new Date(request.createdAt).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+
+                                    {request.notes && (
+                                        <div className="request-notes">
+                                            <strong>Notes:</strong> {request.notes}
+                                        </div>
+                                    )}
+
+                                    <div className="request-actions">
+                                        {userRole === 'branch manager' && request.status === 'pending' && (
+                                            <>
+                                                <button 
+                                                    onClick={() => updateRequestStatus(request._id, 'approved')}
+                                                    className="approve-btn"
+                                                >
+                                                    <CheckCircle size={16} />
+                                                    Approve
+                                                </button>
+                                                <button 
+                                                    onClick={() => updateRequestStatus(request._id, 'rejected')}
+                                                    className="reject-btn"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </>
+                                        )}
+                                        
+                                        {userRole === 'branch manager' && request.status === 'approved' && (
+                                            <button 
+                                                onClick={() => updateRequestStatus(request._id, 'delivered')}
+                                                className="deliver-btn"
+                                            >
+                                                Mark as Delivered
+                                            </button>
+                                        )}
+
+                                        <button 
+                                            onClick={() => setEditingRequest(request)}
+                                            className="edit-btn"
+                                        >
+                                            <Edit size={16} />
+                                            Edit Status
+                                        </button>
+
+                                        {userRole === 'admin' && (
+                                            <button 
+                                                onClick={() => deleteRequest(request._id)}
+                                                className="delete-btn"
+                                            >
+                                                <Trash2 size={16} />
+                                                Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Emergency Detail Modal */}
             {selectedEmergency && (
@@ -380,6 +582,114 @@ const EmergencyDashboard = () => {
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Request Modal */}
+            {editingRequest && (
+                <div className="request-modal" onClick={() => setEditingRequest(null)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Edit Request Status</h2>
+                            <button 
+                                className="close-btn"
+                                onClick={() => setEditingRequest(null)}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="request-summary">
+                                <h3>{editingRequest.itemName}</h3>
+                                <p>Requested by: {editingRequest.requesterId?.firstName} {editingRequest.requesterId?.lastName}</p>
+                                <p>Quantity: {editingRequest.quantity} • Category: {editingRequest.category}</p>
+                                <p>Location: {editingRequest.location}</p>
+                                <p>Current Status: <span style={{ color: getRequestStatusColor(editingRequest.status) }}>{editingRequest.status}</span></p>
+                            </div>
+
+                            <div className="status-actions">
+                                <h4>Update Status:</h4>
+                                <div className="status-buttons">
+                                    {userRole === 'branch manager' && (
+                                        <>
+                                            <button 
+                                                onClick={() => updateRequestStatus(editingRequest._id, 'approved')}
+                                                className="status-btn approve"
+                                            >
+                                                Approve
+                                            </button>
+                                            <button 
+                                                onClick={() => updateRequestStatus(editingRequest._id, 'rejected')}
+                                                className="status-btn reject"
+                                            >
+                                                Reject
+                                            </button>
+                                            <button 
+                                                onClick={() => updateRequestStatus(editingRequest._id, 'delivered')}
+                                                className="status-btn deliver"
+                                            >
+                                                Mark as Delivered
+                                            </button>
+                                        </>
+                                    )}
+                                    
+                                    {userRole === 'admin' && (
+                                        <>
+                                            <button 
+                                                onClick={() => updateRequestStatus(editingRequest._id, 'pending')}
+                                                className="status-btn pending"
+                                            >
+                                                Set to Pending
+                                            </button>
+                                            <button 
+                                                onClick={() => updateRequestStatus(editingRequest._id, 'approved')}
+                                                className="status-btn approve"
+                                            >
+                                                Approve
+                                            </button>
+                                            <button 
+                                                onClick={() => updateRequestStatus(editingRequest._id, 'rejected')}
+                                                className="status-btn reject"
+                                            >
+                                                Reject
+                                            </button>
+                                            <button 
+                                                onClick={() => updateRequestStatus(editingRequest._id, 'delivered')}
+                                                className="status-btn deliver"
+                                            >
+                                                Mark as Delivered
+                                            </button>
+                                            <button 
+                                                onClick={() => updateRequestStatus(editingRequest._id, 'fulfilled')}
+                                                className="status-btn fulfill"
+                                            >
+                                                Mark as Fulfilled
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="notes-section">
+                                <h4>Add Notes:</h4>
+                                <textarea 
+                                    id="requestNotes"
+                                    placeholder="Add any notes about this request..."
+                                    rows="3"
+                                />
+                                <button 
+                                    onClick={() => {
+                                        const notes = document.getElementById('requestNotes').value;
+                                        updateRequestStatus(editingRequest._id, editingRequest.status, notes);
+                                    }}
+                                    className="save-notes-btn"
+                                >
+                                    Save Notes
+                                </button>
                             </div>
                         </div>
                     </div>

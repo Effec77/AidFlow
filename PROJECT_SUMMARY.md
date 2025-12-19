@@ -95,7 +95,22 @@
 - Dynamic re-routing based on changing conditions
 - ETA prediction with AI adjustments
 
-### Agent 4: Python Disaster Monitor
+### Agent 4: LangChain Emergency Decision Agent (NEW)
+**Purpose:** Autonomous dispatch decision making and resource allocation
+**Technologies:** LangChain, GPT-3.5-turbo, Rule-based Fallback
+**Processing Time:** ~3-5 seconds
+**Integration:** BERT Agents + Inventory System
+
+**Capabilities:**
+- Autonomous dispatch decision making
+- Real-time inventory scanning and resource matching
+- Cost-benefit analysis and risk assessment
+- Optimal resource quantity calculation
+- Integration with existing BERT analysis
+- Rule-based fallback for offline operation
+- Punjab-focused emergency response optimization
+
+### Agent 5: Python Disaster Monitor
 **Purpose:** Real-time disaster detection and monitoring
 **Technologies:** USGS API, NASA FIRMS, MongoDB
 **Processing:** Hourly automated updates

@@ -1,0 +1,158 @@
+[
+  {
+    "emergencyId": "EMG_2024_001",
+    "userId": "676473b2c123456789abcd00",
+    "location": {
+      "lat": 30.7333,
+      "lon": 76.7794,
+      "address": "Sector 17, Chandigarh, Punjab"
+    },
+    "userMessage": "Flash flood in our area, need immediate medical assistance and evacuation support",
+    "aiAnalysis": {
+      "disaster": {
+        "type": "flood",
+        "confidence": 0.92,
+        "indicators": ["water", "flood", "evacuation"],
+        "priority": "critical"
+      },
+      "sentiment": {
+        "urgency": "critical",
+        "emotion": "panic",
+        "keywords": ["immediate", "flood", "assistance"],
+        "score": 0.95
+      },
+      "severity": "critical"
+    },
+    "response": {
+      "resources": {
+        "immediate": ["emergency_medical_kits", "rescue_boats", "evacuation_vehicles"],
+        "secondary": ["emergency_blankets", "water_purification_tablets", "emergency_food"],
+        "quantities": {
+          "emergency_medical_kits": 10,
+          "rescue_boats": 3,
+          "evacuation_vehicles": 2,
+          "emergency_blankets": 50,
+          "water_purification_tablets": 200,
+          "emergency_food": 100
+        }
+      }
+    },
+    "status": "received",
+    "timeline": [
+      {
+        "status": "received",
+        "timestamp": "2024-12-19T08:30:00.000Z",
+        "notes": "Emergency request received and analyzed by AI"
+      }
+    ]
+  },
+  {
+    "emergencyId": "EMG_2024_002",
+    "userId": "676473b2c123456789abcd00",
+    "location": {
+      "lat": 30.9010,
+      "lon": 75.8573,
+      "address": "Industrial Area, Ludhiana, Punjab"
+    },
+    "userMessage": "Building collapse after earthquake, people trapped inside, urgent rescue needed",
+    "aiAnalysis": {
+      "disaster": {
+        "type": "earthquake",
+        "confidence": 0.88,
+        "indicators": ["earthquake", "collapse", "trapped"],
+        "priority": "critical"
+      },
+      "sentiment": {
+        "urgency": "critical",
+        "emotion": "desperation",
+        "keywords": ["trapped", "urgent", "rescue"],
+        "score": 0.98
+      },
+      "severity": "critical"
+    },
+    "response": {
+      "resources": {
+        "immediate": ["rescue_equipment", "emergency_medical_kits", "search_dogs"],
+        "secondary": ["emergency_generators", "portable_lights", "communication_equipment"],
+        "quantities": {
+          "rescue_equipment": 5,
+          "emergency_medical_kits": 15,
+          "search_dogs": 2,
+          "emergency_generators": 3,
+          "portable_lights": 20,
+          "communication_equipment": 8
+        }
+      }
+    },
+    "status": "dispatched",
+    "timeline": [
+      {
+        "status": "received",
+        "timestamp": "2024-12-18T14:15:00.000Z",
+        "notes": "Emergency request received and analyzed by AI"
+      },
+      {
+        "status": "dispatched",
+        "timestamp": "2024-12-18T14:45:00.000Z",
+        "notes": "Rescue teams dispatched to location"
+      }
+    ]
+  },
+  {
+    "emergencyId": "EMG_2024_003",
+    "userId": "676473b2c123456789abcd00",
+    "location": {
+      "lat": 31.6340,
+      "lon": 74.8723,
+      "address": "Golden Temple Area, Amritsar, Punjab"
+    },
+    "userMessage": "Fire outbreak in residential area, spreading rapidly, need firefighting support",
+    "aiAnalysis": {
+      "disaster": {
+        "type": "fire",
+        "confidence": 0.94,
+        "indicators": ["fire", "outbreak", "spreading"],
+        "priority": "high"
+      },
+      "sentiment": {
+        "urgency": "high",
+        "emotion": "fear",
+        "keywords": ["fire", "rapidly", "support"],
+        "score": 0.89
+      },
+      "severity": "high"
+    },
+    "response": {
+      "resources": {
+        "immediate": ["fire_trucks", "water_tankers", "firefighting_equipment"],
+        "secondary": ["emergency_medical_kits", "evacuation_vehicles", "emergency_blankets"],
+        "quantities": {
+          "fire_trucks": 4,
+          "water_tankers": 6,
+          "firefighting_equipment": 10,
+          "emergency_medical_kits": 8,
+          "evacuation_vehicles": 3,
+          "emergency_blankets": 40
+        }
+      }
+    },
+    "status": "en_route",
+    "timeline": [
+      {
+        "status": "received",
+        "timestamp": "2024-12-17T16:20:00.000Z",
+        "notes": "Emergency request received and analyzed by AI"
+      },
+      {
+        "status": "dispatched",
+        "timestamp": "2024-12-17T16:35:00.000Z",
+        "notes": "Fire department units dispatched"
+      },
+      {
+        "status": "en_route",
+        "timestamp": "2024-12-17T16:50:00.000Z",
+        "notes": "Emergency teams en route to location"
+      }
+    ]
+  }
+]
