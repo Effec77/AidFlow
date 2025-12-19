@@ -1,5 +1,6 @@
 /* ---------------- Base Styles ---------------- */
-html, body {
+html,
+body {
   font-family: 'Inter', sans-serif;
   background-color: var(--primary-bg);
   color: var(--text-color);
@@ -38,8 +39,9 @@ body.light .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
   flex-wrap: nowrap;
+  min-height: 50px;
 }
 
 /* ---------------- Logo ---------------- */
@@ -83,9 +85,9 @@ body.light .header {
   color: var(--text-color);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.95rem;
-  letter-spacing: 0.3px;
-  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.2px;
+  padding: 0.4rem 0.6rem;
   background: none;
   border: none;
   position: relative;
@@ -119,18 +121,25 @@ body.light .header {
 .right-nav .nav-list {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   transition: background 0.3s ease;
+  position: relative;
+  flex-wrap: nowrap;
 }
 
 /* ---------------- Dropdown ---------------- */
 .auth-dropdown {
   position: relative;
+  z-index: 1000;
 }
 
-.auth-dropdown > .nav-link {
+.auth-dropdown>.nav-link {
   cursor: pointer;
   white-space: nowrap;
+}
+
+.auth-dropdown:hover {
+  z-index: 1010;
 }
 
 .auth-dropdown:hover .dropdown-menu {
@@ -153,7 +162,7 @@ body.light .header {
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 24px var(--shadow-color);
   overflow: hidden;
-  z-index: 1001;
+  z-index: 1015;
   backdrop-filter: blur(10px);
 }
 
@@ -193,9 +202,10 @@ body.light .dropdown-item:hover {
   color: var(--text-color);
   border: none;
   border-radius: 9999px;
-  padding: 0.5rem 1.25rem;
+  padding: 0.4rem 0.8rem;
   cursor: pointer;
   font-weight: 600;
+  font-size: 0.8rem;
   transition: all 0.3s ease;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
@@ -226,18 +236,47 @@ body.light .dropdown-item:hover {
 }
 
 /* ---------------- Responsive ---------------- */
+@media (max-width: 1400px) {
+  .header {
+    max-width: 98%;
+    padding: 0.5rem 1rem;
+  }
+
+  .nav-link {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .nav-list {
+    gap: 0.3rem;
+  }
+
+  .dropdown-menu {
+    min-width: 180px;
+  }
+
+  .theme-toggle {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
+}
+
 @media (max-width: 1200px) {
   .header {
     max-width: 95%;
   }
-  
+
   .nav-link {
-    font-size: 0.9rem;
-    padding: 0.5rem 0.7rem;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.4rem;
   }
-  
+
   .nav-list {
-    gap: 0.5rem;
+    gap: 0.2rem;
+  }
+
+  .dropdown-menu {
+    min-width: 160px;
   }
 }
 
@@ -245,9 +284,27 @@ body.light .dropdown-item:hover {
   .centered-nav {
     display: none;
   }
-  
+
   .right-nav .nav-list {
     gap: 0.75rem;
+    flex-wrap: nowrap;
+  }
+
+  .dropdown-menu {
+    min-width: 180px;
+    right: -10px;
+  }
+
+  .auth-dropdown:nth-child(1) .dropdown-menu {
+    right: 0;
+  }
+
+  .auth-dropdown:nth-child(2) .dropdown-menu {
+    right: -20px;
+  }
+
+  .auth-dropdown:nth-child(3) .dropdown-menu {
+    right: -40px;
   }
 }
 
@@ -315,7 +372,91 @@ body.light .dropdown-item:hover {
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+/* --- Prevent Dropdown Overlapping --- */
+.auth-dropdown:not(:hover) {
+  z-index: 1000;
+}
+
+.auth-dropdown:hover~.auth-dropdown {
+  z-index: 999;
+}
+
+/* --- Stagger dropdown positions to prevent overlap --- */
+.right-nav .auth-dropdown:nth-child(1) .dropdown-menu {
+  right: 0;
+}
+
+.right-nav .auth-dropdown:nth-child(2) .dropdown-menu {
+  right: -30px;
+}
+
+.right-nav .auth-dropdown:nth-child(3) .dropdown-menu {
+  right: -60px;
+}
+
+/* --- Compact layout for many nav items --- */
+.right-nav .nav-list>li {
+  flex-shrink: 1;
+}
+
+.right-nav .nav-list>li:last-child {
+  flex-shrink: 0;
+}
+
+/* --- Better spacing for crowded navbar --- */
+@media (max-width: 1100px) {
+  .header-container {
+    gap: 0.5rem;
+  }
+
+  .right-nav .nav-list {
+    gap: 0.25rem;
+  }
+
+  .nav-link {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.4rem;
+  }
+
+  .theme-toggle {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* --- Hide less critical items on very small screens --- */
+@media (max-width: 900px) {
+  .centered-nav {
+    display: none;
+  }
+
+  .right-nav .nav-list {
+    gap: 0.3rem;
+  }
+}
+
+/* --- Ensure dropdowns don't overflow viewport --- */
+@media (max-width: 480px) {
+  .dropdown-menu {
+    right: -20px !important;
+    min-width: 160px;
+    left: auto;
+  }
+
+  .right-nav .auth-dropdown:nth-child(n) .dropdown-menu {
+    right: -20px !important;
+  }
 }

@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { PlusCircle, Edit, Package, Loader, XCircle, Send, Inbox } from 'lucide-react';
+import React, { useState, useEffect, useContext } from 'react';
+import { PlusCircle, Edit, Package, Loader, XCircle } from 'lucide-react';
 import '../css/InventoryPage.css';
 import RoleToggle from "../components/RoleToggle";
 import { useNavigate } from "react-router-dom";
+import { UserContext } from './UserContext';
+import { authenticatedFetch } from '../utils/api';
+import PermissionGate from './PermissionGate';
+import { PERMISSIONS, hasRole } from '../utils/rbac';
 
 const API_BASE_URL = 'http://localhost:5000/api/inventory/items';
 
@@ -33,8 +37,12 @@ const InventoryPage = () => {
   const [message, setMessage] = useState('');
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [transactionItem, setTransactionItem] = useState(null);
+  const { token, userRole } = useContext(UserContext);
 
   const navigate = useNavigate();
+
+  // Check if user can manage inventory (admin, branch manager)
+  const canManageInventory = hasRole(userRole, ['admin', 'branch manager']);
 
   // ✅ Role Toggle handler
   const handleRoleChange = (role) => {
@@ -46,8 +54,13 @@ const InventoryPage = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(API_BASE_URL);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      const response = await authenticatedFetch(API_BASE_URL, {}, token);
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in.');
+        }
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
       const data = await response.json();
       setItems(data);
     } catch (err) {
@@ -59,7 +72,7 @@ const InventoryPage = () => {
 
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [token]);
 
   const handleChange = (e) => {
     const { id, value, type } = e.target;
@@ -104,11 +117,10 @@ const InventoryPage = () => {
     const url = isEditing ? `${API_BASE_URL}/${editingItemId}` : API_BASE_URL;
 
     try {
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
-      });
+      }, token);
 
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
@@ -162,11 +174,10 @@ const InventoryPage = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/${transactionItem._id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/${transactionItem._id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentStock: newStock, lastUpdated: new Date().toISOString() }),
-      });
+      }, token);
 
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
@@ -194,34 +205,38 @@ const InventoryPage = () => {
       <h1>Supply Chain Dashboard Overview</h1>
       <p className="subtitle">Centralized management for all disaster relief inventory.</p>
 
+
+
       {isLoading && <div className="status loading"><Loader className="spin" /> Loading...</div>}
       {error && <div className="status error"><XCircle /> {error}</div>}
       {message && !error && <div className="status success">{message}</div>}
 
-      <section className="inventory-form-section">
-        <h2>{isEditing ? 'Edit Inventory Item' : 'Add New Inventory Item'}</h2>
-        <form onSubmit={handleSubmit} className="inventory-form">
-          <div className="form-grid">
-            <FormInput id="name" label="Item Name" value={formData.name} onChange={handleChange} required />
-            <FormSelect id="category" label="Category" value={formData.category} onChange={handleChange} options={CATEGORIES} required />
-            <FormInput id="supplier" label="Supplier" value={formData.supplier} onChange={handleChange} required />
-            <FormInput id="currentStock" label="Current Stock" type="number" value={formData.currentStock} onChange={handleChange} required />
-            <FormInput id="unit" label="Unit" value={formData.unit} onChange={handleChange} required />
-            <FormInput id="location" label="Location" value={formData.location} onChange={handleChange} required />
-            <FormInput id="cost" label="Cost" type="number" value={formData.cost} onChange={handleChange} required />
-            <FormInput id="minThreshold" label="Min Threshold" type="number" value={formData.minThreshold} onChange={handleChange} />
-            <FormInput id="maxCapacity" label="Max Capacity" type="number" value={formData.maxCapacity} onChange={handleChange} />
-            <FormSelect id="status" label="Status" value={formData.status} onChange={handleChange} options={STATUSES} required />
-          </div>
+      <PermissionGate permission={PERMISSIONS.MANAGE_INVENTORY}>
+        <section className="inventory-form-section">
+          <h2>{isEditing ? 'Edit Inventory Item' : 'Add New Inventory Item'}</h2>
+          <form onSubmit={handleSubmit} className="inventory-form">
+            <div className="form-grid">
+              <FormInput id="name" label="Item Name" value={formData.name} onChange={handleChange} required />
+              <FormSelect id="category" label="Category" value={formData.category} onChange={handleChange} options={CATEGORIES} required />
+              <FormInput id="supplier" label="Supplier" value={formData.supplier} onChange={handleChange} required />
+              <FormInput id="currentStock" label="Current Stock" type="number" value={formData.currentStock} onChange={handleChange} required />
+              <FormInput id="unit" label="Unit" value={formData.unit} onChange={handleChange} required />
+              <FormInput id="location" label="Location" value={formData.location} onChange={handleChange} required />
+              <FormInput id="cost" label="Cost" type="number" value={formData.cost} onChange={handleChange} required />
+              <FormInput id="minThreshold" label="Min Threshold" type="number" value={formData.minThreshold} onChange={handleChange} />
+              <FormInput id="maxCapacity" label="Max Capacity" type="number" value={formData.maxCapacity} onChange={handleChange} />
+              <FormSelect id="status" label="Status" value={formData.status} onChange={handleChange} options={STATUSES} required />
+            </div>
 
-          <div className="form-buttons">
-            <button type="submit" className="btn primary" disabled={isLoading}>
-              {isEditing ? 'Save Changes' : <><PlusCircle /> Add Item</>}
-            </button>
-            {isEditing && <button type="button" onClick={handleReset} className="btn secondary">Cancel Edit</button>}
-          </div>
-        </form>
-      </section>
+            <div className="form-buttons">
+              <button type="submit" className="btn primary" disabled={isLoading}>
+                {isEditing ? 'Save Changes' : <><PlusCircle /> Add Item</>}
+              </button>
+              {isEditing && <button type="button" onClick={handleReset} className="btn secondary">Cancel Edit</button>}
+            </div>
+          </form>
+        </section>
+      </PermissionGate>
 
       <section className="inventory-table-section">
         <h2>Inventory Overview ({items.length} items)</h2>
@@ -252,8 +267,12 @@ const InventoryPage = () => {
                   <TableCell>{item.status}</TableCell>
                   <TableCell>{item.cost}</TableCell>
                   <TableCell className="action-buttons">
-                    <button onClick={() => populateForm(item)} className="icon-btn"><Edit size={18} /></button>
-                    <button onClick={() => openTransactionModal(item)} className="icon-btn"><Package size={18} /></button>
+                    <PermissionGate permission={PERMISSIONS.MANAGE_INVENTORY}>
+                      <button onClick={() => populateForm(item)} className="icon-btn" title="Edit"><Edit size={18} /></button>
+                    </PermissionGate>
+                    <PermissionGate permission={PERMISSIONS.MANAGE_INVENTORY}>
+                      <button onClick={() => openTransactionModal(item)} className="icon-btn" title="Transaction"><Package size={18} /></button>
+                    </PermissionGate>
                   </TableCell>
                 </tr>
               ))}
@@ -302,7 +321,7 @@ const TransactionModal = ({ item, onConfirm, onCancel }) => {
           <div className="modal-buttons">
             <button type="button" onClick={onCancel} className="btn secondary">Cancel</button>
             <button type="submit" className="btn primary" disabled={quantity <= 0 || !counterparty}>
-              {isOutbound ? <Send size={16} /> : <Inbox size={16} />} Confirm
+              Confirm Transaction
             </button>
           </div>
         </form>
@@ -329,6 +348,6 @@ const FormSelect = ({ id, label, value, onChange, options, required = false }) =
 );
 
 const TableHeader = ({ title }) => <th>{title}</th>;
-const TableCell = ({ children }) => <td>{children}</td>;
+const TableCell = ({ children, ...props }) => <td {...props}>{children}</td>;
 
 export default InventoryPage;

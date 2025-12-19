@@ -1,0 +1,69 @@
+[
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Emergency Medical Kits",
+    "category": "Medical",
+    "quantity": 25,
+    "location": "Gurdaspur, Punjab",
+    "status": "pending",
+    "priority": "high",
+    "notes": "Urgent medical supplies needed for displaced families",
+    "timestamp": "2024-12-19T08:30:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Food Packets",
+    "category": "Food",
+    "quantity": 150,
+    "location": "Kapurthala, Punjab",
+    "status": "approved",
+    "priority": "high",
+    "notes": "For refugee families in temporary shelters",
+    "timestamp": "2024-12-18T12:15:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Blankets",
+    "category": "Shelter",
+    "quantity": 80,
+    "location": "Mansa, Punjab",
+    "status": "delivered",
+    "priority": "normal",
+    "notes": "Winter relief for refugee communities",
+    "timestamp": "2024-12-17T14:20:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Water Purification Tablets",
+    "category": "Water",
+    "quantity": 100,
+    "location": "Sangrur, Punjab",
+    "status": "fulfilled",
+    "priority": "high",
+    "notes": "Clean water access for refugee camp",
+    "fulfilledAt": "2024-12-16T10:30:00.000Z",
+    "timestamp": "2024-12-15T09:45:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Portable Toilets",
+    "category": "Equipment",
+    "quantity": 15,
+    "location": "Hoshiarpur, Punjab",
+    "status": "pending",
+    "priority": "normal",
+    "notes": "Sanitation facilities for refugee relief camp",
+    "timestamp": "2024-12-19T16:00:00.000Z"
+  },
+  {
+    "requesterId": "676473b2c123456789abcd00",
+    "itemName": "Baby Formula",
+    "category": "Food",
+    "quantity": 40,
+    "location": "Nawanshahr, Punjab",
+    "status": "approved",
+    "priority": "high",
+    "notes": "Infant nutrition for refugee mothers",
+    "timestamp": "2024-12-18T07:30:00.000Z"
+  }
+]

@@ -1,10 +1,14 @@
 import express from 'express';
 import EmergencyAIAgent from '../services/aiAgent.js';
+import EmergencyDecisionAgent from '../services/emergencyDecisionAgent.js';
 import Emergency from '../models/Emergency.js';
+import DispatchRequest from '../models/DispatchRequest.js';
 import { InventoryItem } from '../models/Inventory.js';
+import mongoose from 'mongoose'; // Import mongoose
 
 const router = express.Router();
 const aiAgent = new EmergencyAIAgent();
+const decisionAgent = new EmergencyDecisionAgent();
 
 /**
  * POST /api/emergency/request
@@ -12,12 +16,30 @@ const aiAgent = new EmergencyAIAgent();
  */
 router.post('/request', async (req, res) => {
     try {
-        const { lat, lon, message, userId, address } = req.body;
+        const { lat, lon, message, address } = req.body;
 
         // Validate input
-        if (!lat || !lon || !message || !userId) {
+        if (!lat || !lon || !message) {
             return res.status(400).json({
-                error: 'Missing required fields: lat, lon, message, userId'
+                error: 'Missing required fields: lat, lon, message'
+            });
+        }
+
+        // Get userId from authenticated user (if available) or from request body
+        let userId;
+        if (req.user && req.user._id) {
+            userId = req.user._id;
+        } else if (req.body.userId) {
+            // Validate ObjectId format
+            if (!mongoose.Types.ObjectId.isValid(req.body.userId)) {
+                return res.status(400).json({
+                    error: 'Invalid userId format. Must be a valid MongoDB ObjectId.'
+                });
+            }
+            userId = new mongoose.Types.ObjectId(req.body.userId);
+        } else {
+            return res.status(400).json({
+                error: 'User authentication required. Please provide valid userId or authenticate.'
             });
         }
 
@@ -74,7 +96,7 @@ router.post('/request', async (req, res) => {
         
         const emergency = new Emergency({
             emergencyId: aiResponse.emergencyId,
-            userId,
+            userId: userId,
             location: { lat, lon, address },
             userMessage: message,
             aiAnalysis: {
@@ -98,15 +120,44 @@ router.post('/request', async (req, res) => {
 
         await emergency.save();
 
-        // Update inventory (reserve resources)
-        await reserveResources(aiResponse.response.resources);
+        // 🤖 NEW: Groq Decision Agent - Autonomous Dispatch Decision
+        console.log(`🤖 Invoking Groq Emergency Decision Agent...`);
+        const decisionResult = await decisionAgent.makeDispatchDecision(
+            {
+                emergencyId: aiResponse.emergencyId,
+                location: { lat, lon, address },
+                userMessage: message
+            },
+            aiResponse.analysis
+        );
+
+        console.log(`✅ Decision Agent Result: Dispatch=${decisionResult.shouldDispatch}, Confidence=${decisionResult.confidence}`);
+
+        // Handle inventory based on severity and dispatch decision
+        if (decisionResult.dispatchExecuted) {
+            // High+ severity: Inventory automatically updated during automatic dispatch
+            console.log(`✅ Inventory automatically updated for high severity emergency`);
+        } else {
+            // Medium/Low severity: Create dispatch request and reserve resources
+            console.log(`📋 Creating dispatch request for medium/low severity emergency`);
+            await createDispatchRequest(aiResponse.emergencyId, aiResponse.analysis, aiResponse.response.resources);
+        }
 
         res.status(201).json({
             success: true,
             emergencyId: aiResponse.emergencyId,
             analysis: aiResponse.analysis,
             response: aiResponse.response,
-            message: 'Emergency request processed successfully. Help is on the way!'
+            autonomousDecision: {
+                shouldDispatch: decisionResult.shouldDispatch,
+                confidence: decisionResult.confidence,
+                dispatchExecuted: decisionResult.dispatchExecuted || false,
+                reasoning: decisionResult.reasoning,
+                dispatchPlan: decisionResult.dispatchPlan
+            },
+            message: decisionResult.dispatchExecuted 
+                ? '🚀 Emergency analyzed and resources automatically dispatched by AI!' 
+                : 'Emergency request processed successfully. Awaiting manual dispatch approval.'
         });
 
     } catch (error) {
@@ -205,7 +256,7 @@ router.put('/update/:emergencyId', async (req, res) => {
             status: status || emergency.status,
             timestamp: new Date(),
             notes: notes || `Status updated to ${status}`,
-            updatedBy
+            updatedBy: updatedBy ? new mongoose.Types.ObjectId(updatedBy) : null // Convert updatedBy to ObjectId
         });
 
         await emergency.save();
@@ -263,6 +314,66 @@ router.get('/analytics', async (req, res) => {
         res.status(500).json({ error: 'Failed to get emergency analytics' });
     }
 });
+
+// Helper function to create dispatch request for medium/low severity emergencies
+async function createDispatchRequest(emergencyId, analysis, resourcePlan) {
+    try {
+        const severity = analysis?.severity || 'medium';
+        const requestedResources = [];
+        
+        // Convert resource plan to structured format
+        const immediate = resourcePlan?.immediate || [];
+        const secondary = resourcePlan?.secondary || [];
+        const allResources = [...immediate, ...secondary];
+        
+        for (const resourceName of allResources) {
+            const quantity = resourcePlan?.quantities?.[resourceName] || 1;
+            requestedResources.push({
+                name: resourceName,
+                quantity: quantity,
+                category: mapResourceToCategory(resourceName)
+            });
+        }
+        
+        const dispatchRequest = new DispatchRequest({
+            emergencyId: emergencyId,
+            severity: severity,
+            requestedResources: requestedResources,
+            status: 'pending',
+            priority: severity === 'medium' ? 'medium' : 'low',
+            reasoning: `${severity} severity emergency requires manual approval for dispatch`,
+            notes: `AI analysis confidence: ${analysis?.disaster?.confidence || 'unknown'}`
+        });
+        
+        await dispatchRequest.save();
+        console.log(`📋 Dispatch request created for emergency ${emergencyId}`);
+        
+        // Reserve resources temporarily
+        await reserveResources(resourcePlan);
+        
+    } catch (error) {
+        console.error('❌ Failed to create dispatch request:', error.message);
+    }
+}
+
+// Helper function to map resource names to categories
+function mapResourceToCategory(resourceName) {
+    const categoryMap = {
+        'medical': 'Medical',
+        'food': 'Food', 
+        'water': 'Water',
+        'shelter': 'Shelter',
+        'equipment': 'Equipment'
+    };
+    
+    const lowerName = resourceName.toLowerCase();
+    for (const [key, category] of Object.entries(categoryMap)) {
+        if (lowerName.includes(key)) {
+            return category;
+        }
+    }
+    return 'Equipment'; // Default category
+}
 
 // Helper function to reserve resources
 async function reserveResources(resourcePlan) {
@@ -389,6 +500,297 @@ router.post('/reroute/:emergencyId', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/emergency/ai-decision/:emergencyId
+ * Trigger AI decision agent for existing emergency (manual override)
+ */
+router.post('/ai-decision/:emergencyId', async (req, res) => {
+    try {
+        const { emergencyId } = req.params;
+        const { forceDecision } = req.body;
+
+        console.log(`🤖 Manual AI decision trigger for ${emergencyId}`);
+
+        // Get emergency from database
+        const emergency = await Emergency.findOne({ emergencyId });
+        if (!emergency) {
+            return res.status(404).json({ error: 'Emergency not found' });
+        }
+
+        // Run decision agent
+        const decisionResult = await decisionAgent.makeDispatchDecision(
+            {
+                emergencyId: emergency.emergencyId,
+                location: emergency.location,
+                userMessage: emergency.userMessage
+            },
+            emergency.aiAnalysis
+        );
+
+        // Force dispatch if requested and confidence is reasonable
+        if (forceDecision && decisionResult.confidence > 0.5 && !decisionResult.dispatchExecuted) {
+            const forceDispatchResult = await decisionAgent.executeDispatch(emergencyId, decisionResult.dispatchPlan);
+            decisionResult.dispatchExecuted = forceDispatchResult.success;
+            decisionResult.dispatchResult = forceDispatchResult;
+        }
+
+        res.json({
+            success: true,
+            emergencyId,
+            decision: decisionResult,
+            message: decisionResult.dispatchExecuted 
+                ? 'Resources dispatched by AI decision agent'
+                : 'AI analysis complete - manual review recommended'
+        });
+
+    } catch (error) {
+        console.error('❌ AI decision error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/emergency/ai-capabilities
+ * Get AI decision agent capabilities and status
+ */
+router.get('/ai-capabilities', async (req, res) => {
+    try {
+        // Test Groq connection
+        await decisionAgent.testGroqConnection();
+        
+        const capabilities = {
+            groqEnabled: decisionAgent.groqAvailable,
+            groqModel: decisionAgent.modelName,
+            bertAgentsIntegrated: true,
+            autonomousDispatchEnabled: true,
+            inventoryScanEnabled: true,
+            supportedDisasterTypes: ['flood', 'fire', 'earthquake', 'medical', 'general'],
+            decisionCriteria: {
+                minimumConfidence: 0.7,
+                requiredSeverity: ['high', 'critical'],
+                inventoryCheckRequired: true,
+                costBenefitAnalysis: true
+            },
+            fallbackMode: 'rule-based-decision',
+            aiMode: decisionAgent.groqAvailable ? 'groq-llm' : 'rule-based',
+            version: '2.0.0-groq'
+        };
+
+        res.json({
+            success: true,
+            capabilities
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/emergency/public-request
+ * Submit an emergency request without authentication (for testing/public use)
+ */
+router.post('/public-request', async (req, res) => {
+    try {
+        const { lat, lon, message, address, userInfo } = req.body;
+
+        // Validate input
+        if (!lat || !lon || !message) {
+            return res.status(400).json({
+                error: 'Missing required fields: lat, lon, message'
+            });
+        }
+
+        // Create a temporary user ID for public requests
+        const publicUserId = new mongoose.Types.ObjectId();
+
+        console.log(`🚨 Public emergency request at ${lat}, ${lon}`);
+        console.log(`📝 Message: "${message}"`);
+
+        // Process with AI Agent
+        const emergencyData = { lat, lon, message, timestamp: new Date() };
+        const aiResponse = await aiAgent.processEmergencyRequest(emergencyData);
+
+        // Save to database
+        const emergency = new Emergency({
+            emergencyId: aiResponse.emergencyId,
+            userId: publicUserId,
+            location: { lat, lon, address },
+            userMessage: message,
+            aiAnalysis: aiResponse.analysis,
+            response: aiResponse.response,
+            satelliteData: aiResponse.satelliteData || {},
+            timeline: [{
+                status: 'received',
+                timestamp: new Date(),
+                notes: 'Public emergency request received and analyzed by AI'
+            }]
+        });
+
+        await emergency.save();
+
+        // 🤖 LangChain Decision Agent - Autonomous Dispatch Decision
+        console.log(`🤖 Invoking Ollama Emergency Decision Agent...`);
+        const decisionResult = await decisionAgent.makeDispatchDecision(
+            {
+                emergencyId: aiResponse.emergencyId,
+                location: { lat, lon, address },
+                userMessage: message
+            },
+            aiResponse.analysis
+        );
+
+        console.log(`✅ Decision Agent Result: Dispatch=${decisionResult.shouldDispatch}, Confidence=${decisionResult.confidence}`);
+
+        // Handle inventory based on severity and dispatch decision
+        if (decisionResult.dispatchExecuted) {
+            // High+ severity: Inventory automatically updated during automatic dispatch
+            console.log(`✅ Inventory automatically updated for high severity emergency`);
+        } else {
+            // Medium/Low severity: Create dispatch request and reserve resources
+            console.log(`📋 Creating dispatch request for medium/low severity emergency`);
+            await createDispatchRequest(aiResponse.emergencyId, aiResponse.analysis, aiResponse.response.resources);
+        }
+
+        res.status(201).json({
+            success: true,
+            emergencyId: aiResponse.emergencyId,
+            analysis: aiResponse.analysis,
+            response: aiResponse.response,
+            autonomousDecision: {
+                shouldDispatch: decisionResult.shouldDispatch,
+                confidence: decisionResult.confidence,
+                dispatchExecuted: decisionResult.dispatchExecuted || false,
+                reasoning: decisionResult.reasoning,
+                dispatchPlan: decisionResult.dispatchPlan
+            },
+            message: decisionResult.dispatchExecuted 
+                ? '🚀 Emergency analyzed and resources automatically dispatched by AI!' 
+                : 'Emergency request processed successfully. Awaiting manual dispatch approval.',
+            userInfo: userInfo || 'Anonymous public request'
+        });
+
+    } catch (error) {
+        console.error('❌ Public emergency request error:', error.message);
+        res.status(500).json({
+            error: 'Failed to process emergency request',
+            details: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/emergency/dispatch-requests
+ * Get all pending dispatch requests for admin approval
+ */
+router.get('/dispatch-requests', async (req, res) => {
+    try {
+        const requests = await DispatchRequest.find({
+            status: 'pending'
+        }).sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            count: requests.length,
+            requests: requests
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * PUT /api/emergency/dispatch-requests/:id/approve
+ * Approve a dispatch request and execute dispatch
+ */
+router.put('/dispatch-requests/:id/approve', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { adminId, notes } = req.body;
+
+        console.log(`🔍 Approving dispatch request ${id} by admin ${adminId}`);
+
+        const request = await DispatchRequest.findById(id);
+        if (!request) {
+            console.log(`❌ Dispatch request ${id} not found`);
+            return res.status(404).json({ error: 'Dispatch request not found' });
+        }
+
+        console.log(`📋 Found dispatch request for emergency: ${request.emergencyId}`);
+
+        // Update request status
+        request.status = 'approved';
+        request.approvedBy = mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
+        request.approvedAt = new Date();
+        request.notes = notes || 'Approved by admin';
+        await request.save();
+
+        // Execute dispatch
+        const DispatchService = (await import('../services/dispatchService.js')).default;
+        const dispatchService = new DispatchService();
+        const dispatchResult = await dispatchService.dispatchEmergency(request.emergencyId, 
+            mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : new mongoose.Types.ObjectId());
+
+        res.json({
+            success: true,
+            message: 'Dispatch request approved and executed',
+            request: request,
+            dispatchResult: dispatchResult
+        });
+
+    } catch (error) {
+        console.error('❌ Dispatch request approval error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            details: error.stack
+        });
+    }
+});
+
+/**
+ * PUT /api/emergency/dispatch-requests/:id/reject
+ * Reject a dispatch request
+ */
+router.put('/dispatch-requests/:id/reject', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { adminId, reason } = req.body;
+
+        const request = await DispatchRequest.findById(id);
+        if (!request) {
+            return res.status(404).json({ error: 'Dispatch request not found' });
+        }
+
+        request.status = 'rejected';
+        request.approvedBy = mongoose.Types.ObjectId.isValid(adminId) ? new mongoose.Types.ObjectId(adminId) : null;
+        request.approvedAt = new Date();
+        request.notes = reason || 'Rejected by admin';
+        await request.save();
+
+        res.json({
+            success: true,
+            message: 'Dispatch request rejected',
+            request: request
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 export default router;
 /**
 
@@ -413,7 +815,7 @@ router.post('/dispatch/:emergencyId', async (req, res) => {
         const dispatchService = new DispatchService();
 
         // Execute automated dispatch
-        const result = await dispatchService.dispatchEmergency(emergencyId, adminId);
+        const result = await dispatchService.dispatchEmergency(emergencyId, new mongoose.Types.ObjectId(adminId)); // Convert adminId to ObjectId
 
         res.json(result);
 

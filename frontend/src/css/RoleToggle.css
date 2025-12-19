@@ -1,59 +1,60 @@
-/* ---------------------- General Styles ---------------------- */
+/* ---------------------- Role Toggle ---------------------- */
 .role-toggle {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 6rem; /* accounts for header */
-    padding: 0.75rem 1rem;
-    border-radius: 9999px;
-    background: var(--card-bg);
-    box-shadow: 0 4px 10px var(--shadow-color);
-    width: fit-content;
-    margin-inline: auto;
-    transition: background 0.3s ease, color 0.3s ease;
-  }
-  
-  /* Role Button */
-  .role-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-secondary);
-    transition: all 0.3s ease;
-  }
-  
-  .role-btn:hover {
-    color: var(--accent);
-    transform: translateY(-2px);
-  }
-  
-  /* Active Role */
-  .role-btn.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-  
-  /* ---------------------- Dark Mode ---------------------- */
-  :root {
-    --card-bg: #1a1a1a;
-    --text-secondary: #ccc;
-    --accent: #4f9eff;
-    --shadow-color: rgba(0, 0, 0, 0.3);
-  }
-  
-  /* ---------------------- Light Mode ---------------------- */
-  [data-theme="light"] {
-    --card-bg: #f9f9f9;
-    --text-secondary: #555;
-    --accent: #0077ff;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-  }
-  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+
+  /* Center it properly */
+  margin: 1rem auto 2rem;
+  width: fit-content;
+
+  padding: 0.5rem;
+  border-radius: 9999px;
+
+  /* Use global variables */
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+
+  transition: all var(--transition-normal);
+}
+
+.role-toggle:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Role Button */
+.role-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+
+  transition: all var(--transition-fast);
+}
+
+.role-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+/* Active Role */
+.role-btn.active {
+  background: var(--primary-500);
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.role-btn.active:hover {
+  background: var(--primary-600);
+}

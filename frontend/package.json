@@ -1,7 +1,9 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "aidflow-frontend",
+  "version": "1.0.0",
+  "description": "AidFlow Emergency Response System - React Frontend with real-time disaster management",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.0.1",
     "@fortawesome/free-solid-svg-icons": "^7.0.1",
@@ -26,8 +28,28 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "test": "react-scripts test --watchAll=false",
+    "test:watch": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "echo \"No linting configured\" && exit 0",
+    "serve": "serve -s build -l 3000"
+  },
+  "keywords": [
+    "emergency-response",
+    "disaster-management",
+    "react",
+    "frontend",
+    "real-time",
+    "punjab",
+    "india",
+    "leaflet",
+    "maps"
+  ],
+  "author": "AidFlow Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "eslintConfig": {
     "extends": [
@@ -46,5 +68,15 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/aidflow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/aidflow/issues"
   }
 }

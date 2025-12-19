@@ -1,43 +1,74 @@
 [
-    {
-      "name": "Houston Medical Center",
-      "type": "Medical Facility",
-      "capacity": "85%"
-    },
-    {
-      "name": "Regional Blood Bank",
-      "type": "Medical Storage",
-      "capacity": "30%"
-    },
-    {
-      "name": "Central Food Warehouse",
-      "type": "Food Storage",
-      "capacity": "67%"
-    },
-    {
-      "name": "Supply Depot A",
-      "type": "General Storage",
-      "capacity": "72%"
-    },
-    {
-      "name": "Supply Depot B",
-      "type": "General Storage",
-      "capacity": "58%"
-    },
-    {
-      "name": "Equipment Center",
-      "type": "Equipment Storage",
-      "capacity": "91%"
-    },
-    {
-      "name": "Water Treatment Facility",
-      "type": "Water Storage",
-      "capacity": "40%"
-    },
-    {
-      "name": "Communications Hub",
-      "type": "Equipment Storage",
-      "capacity": "15%"
+  {
+    "name": "Chandigarh Emergency Response Center",
+    "type": "Emergency Response Hub",
+    "capacity": "85%",
+    "coordinates": {
+      "lat": 30.7333,
+      "lon": 76.7794
     }
-  ]
-  
+  },
+  {
+    "name": "Ludhiana Relief Warehouse",
+    "type": "Storage Facility",
+    "capacity": "67%",
+    "coordinates": {
+      "lat": 30.9010,
+      "lon": 75.8573
+    }
+  },
+  {
+    "name": "Amritsar Medical Supply Center",
+    "type": "Medical Facility",
+    "capacity": "30%",
+    "coordinates": {
+      "lat": 31.6340,
+      "lon": 74.8723
+    }
+  },
+  {
+    "name": "Jalandhar Distribution Hub",
+    "type": "Distribution Center",
+    "capacity": "72%",
+    "coordinates": {
+      "lat": 31.3260,
+      "lon": 75.5762
+    }
+  },
+  {
+    "name": "Patiala Emergency Depot",
+    "type": "Supply Chain Hub",
+    "capacity": "58%",
+    "coordinates": {
+      "lat": 30.3398,
+      "lon": 76.3869
+    }
+  },
+  {
+    "name": "Bathinda Relief Station",
+    "type": "Distribution Center",
+    "capacity": "91%",
+    "coordinates": {
+      "lat": 30.2110,
+      "lon": 74.9455
+    }
+  },
+  {
+    "name": "Mohali Emergency Center",
+    "type": "Emergency Response Hub",
+    "capacity": "40%",
+    "coordinates": {
+      "lat": 30.7046,
+      "lon": 76.7179
+    }
+  },
+  {
+    "name": "Firozpur Border Relief Post",
+    "type": "Border Relief Station",
+    "capacity": "15%",
+    "coordinates": {
+      "lat": 30.9320,
+      "lon": 74.6150
+    }
+  }
+]

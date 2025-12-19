@@ -1,7 +1,7 @@
 /* Routing Visualization Styles */
 .routing-visualization {
     padding: 2rem;
-    padding-top: 120px; /* Space for fixed header */
+    /* padding-top removed to fix excessive spacing */
     max-width: 1400px;
     margin: 0 auto;
     animation: fadeInUp 0.6s ease-out;
@@ -12,6 +12,7 @@
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -29,6 +30,7 @@
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -39,27 +41,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    margin: 0 0 0.75rem 0;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--heading-color);
+    gap: 1rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 3rem;
+    /* Increase size to match screenshot prominence */
+    font-weight: 800;
+    color: #FFC107;
+    /* Explicit Gold Color */
     font-family: 'Montserrat', sans-serif;
     letter-spacing: -0.02em;
+    text-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
 }
 
 .routing-header p {
-    color: var(--text-color);
-    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-size: 1.2rem;
     opacity: 0.9;
     margin: 0;
 }
 
 .header-icon {
-    width: 36px;
-    height: 36px;
-    color: var(--accent-color);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    width: 42px;
+    height: 42px;
+    color: #FFC107;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .routing-controls {
@@ -178,27 +183,36 @@ body.light .location-picker-btn:hover {
     opacity: 0.5;
 }
 
+/* Calculate Route Button - Updated for Visibility */
 .calculate-route-btn {
     width: 100%;
     padding: 1.25rem 2rem;
     background: linear-gradient(135deg, var(--button-bg), var(--button-hover-bg));
-    color: #1A212E;
-    border: none;
+    /* Text Color Update: Bright Gold/Yellow to match header/brand */
+    color: #ffd700;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    /* Add subtle border */
     border-radius: 12px;
     font-size: 1.15rem;
-    font-weight: 700;
+    font-weight: 800;
+    /* Extra bold */
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    box-shadow: 0 4px 16px rgba(248, 180, 0, 0.3);
+    letter-spacing: 0.1em;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    /* Darker shadow */
     font-family: 'Montserrat', sans-serif;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    /* Strong text shadow for legibility */
 }
 
 .calculate-route-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(248, 180, 0, 0.4);
-    background: linear-gradient(135deg, #FFD700, var(--button-bg));
+    box-shadow: 0 6px 24px rgba(255, 215, 0, 0.2);
+    background: linear-gradient(135deg, #374151, #1F2937);
+    /* Darker hover bg to making text pop */
+    border-color: #ffd700;
 }
 
 .calculate-route-btn:active:not(:disabled) {
@@ -211,6 +225,7 @@ body.light .location-picker-btn:hover {
     opacity: 0.5;
     cursor: not-allowed;
     box-shadow: none;
+    border-color: transparent;
 }
 
 .error-message {
@@ -232,6 +247,7 @@ body.light .location-picker-btn:hover {
         opacity: 0;
         transform: translateX(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -261,10 +277,21 @@ body.light .location-picker-btn:hover {
     animation: fadeInUp 0.6s ease-out backwards;
 }
 
-.info-card:nth-child(1) { animation-delay: 0.1s; }
-.info-card:nth-child(2) { animation-delay: 0.2s; }
-.info-card:nth-child(3) { animation-delay: 0.3s; }
-.info-card:nth-child(4) { animation-delay: 0.4s; }
+.info-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.info-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.info-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.info-card:nth-child(4) {
+    animation-delay: 0.4s;
+}
 
 .info-card::before {
     content: '';
@@ -326,7 +353,7 @@ body.light .location-picker-btn:hover {
     filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.3));
 }
 
-.info-card > div {
+.info-card>div {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -455,7 +482,9 @@ body.light .location-picker-btn:hover {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Leaflet Map Customization */
@@ -491,7 +520,7 @@ body.light .location-picker-btn:hover {
     .routing-header h2 {
         font-size: 2rem;
     }
-    
+
     .route-info {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }

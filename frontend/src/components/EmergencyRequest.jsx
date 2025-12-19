@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { MapPin, AlertTriangle, Send, Clock, CheckCircle } from 'lucide-react';
-import axios from 'axios';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 
 const EmergencyRequest = ({ userId }) => {
+    const { token } = useContext(UserContext);
     const [location, setLocation] = useState({ lat: null, lon: null });
     const [message, setMessage] = useState('');
     const [address, setAddress] = useState('');
@@ -62,7 +64,8 @@ const EmergencyRequest = ({ userId }) => {
         setIsSubmitting(true);
         
         try {
-            const response = await axios.post('http://localhost:5000/api/emergency/request', {
+            const api = createAuthenticatedAxios(token);
+            const response = await api.post('/api/emergency/request', {
                 lat: location.lat,
                 lon: location.lon,
                 message: message.trim(),

@@ -1,28 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useContext } from 'react';
 import { Package, TrendingDown, TrendingUp, AlertTriangle } from 'lucide-react';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 
 /**
  * Inventory Integration Component
  * Displays real-time inventory from backend
  */
 const InventoryIntegration = () => {
+    const { token } = useContext(UserContext);
     const [inventory, setInventory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        fetchInventory();
-        
-        // Refresh every 30 seconds
-        const interval = setInterval(fetchInventory, 30000);
-        return () => clearInterval(interval);
-    }, []);
+        if (token) {
+            fetchInventory();
+            
+            // Refresh every 30 seconds
+            const interval = setInterval(fetchInventory, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [token]);
 
     const fetchInventory = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/inventory/items');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/inventory/items');
             setInventory(response.data);
             setLoading(false);
         } catch (error) {
@@ -69,7 +74,15 @@ const InventoryIntegration = () => {
         <div className="inventory-integration">
             <div className="inventory-header">
                 <h2>📦 Real-Time Inventory</h2>
-                <p>Live stock levels from backend database</p>
+                <p>Live stock levels with dispatch impact tracking</p>
+                <div className="dispatch-legend">
+                    <span className="legend-item">
+                        <span className="auto-indicator">🤖</span> Auto-dispatched (High+ severity)
+                    </span>
+                    <span className="legend-item">
+                        <span className="manual-indicator">👤</span> Manual dispatch (Medium/Low severity)
+                    </span>
+                </div>
             </div>
 
             <div className="inventory-controls">
@@ -130,6 +143,12 @@ const InventoryIntegration = () => {
                                 <div>
                                     <h3>{item.name}</h3>
                                     <span className="category-badge">{item.category}</span>
+                                    {/* Show dispatch impact if recently updated */}
+                                    {item.lastUpdated && new Date() - new Date(item.lastUpdated) < 300000 && (
+                                        <span className="dispatch-impact">
+                                            📦 Recently dispatched
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div 

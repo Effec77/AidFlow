@@ -61,6 +61,7 @@ const Register = () => {
     setLoading(true);
     setStatus('Registering...');
 
+    // Prepare data to send, ensuring role is properly set
     const dataToSend = Object.fromEntries(
       Object.entries(formData).filter(([key, v]) => {
         if (key === 'gender') return v !== '';
@@ -68,7 +69,21 @@ const Register = () => {
       })
     );
 
-    if (!dataToSend.role) dataToSend.role = 'volunteer';
+    // Ensure role is set and valid (only 'volunteer' or 'refugee' allowed)
+    if (!dataToSend.role) {
+      dataToSend.role = 'volunteer'; // Default role
+    }
+    
+    // Normalize role to match backend expectations (lowercase, trimmed)
+    dataToSend.role = dataToSend.role.toLowerCase().trim();
+    
+    // Frontend validation: Only allow public registration for these roles
+    const allowedRoles = ['volunteer', 'refugee'];
+    if (!allowedRoles.includes(dataToSend.role)) {
+      setStatus('Error: Invalid role selected. Please choose Volunteer or Refugee.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('http://localhost:5000/api/register', {
@@ -83,11 +98,15 @@ const Register = () => {
         login(result.token, result.role);
         setStatus(`Registration successful! Redirecting as ${result.role}...`);
 
-        // Redirect based on role
-        if (result.role === 'affected citizen') {
-          navigate('/');
+        // Redirect based on role (using RBAC route access)
+        const normalizedRole = result.role?.toLowerCase();
+        if (normalizedRole === 'refugee') {
+          navigate('/refugee');
+        } else if (normalizedRole === 'volunteer') {
+          navigate('/volunteer');
         } else {
-          navigate('/inventory');
+          // Fallback to home
+          navigate('/');
         }
 
       } else {
@@ -176,7 +195,7 @@ const Register = () => {
                 className="form-field full-width-field"
               >
                 <option value="volunteer">Register as Volunteer/Organization</option>
-                <option value="affected citizen">Register as Affected Citizen</option>
+                <option value="refugee">Register as Refugee</option>
               </select>
             </div>
 
@@ -257,7 +276,7 @@ const Register = () => {
           </div>
 
           {/* Skills shown only for volunteers */}
-          {formData.role !== 'affected citizen' && (
+          {formData.role !== 'refugee' && (
             <div className="volunteer-skills-group">
               <label>What can you do?</label>
               <div className="checkbox-group">

@@ -41,12 +41,12 @@ const agentOutputSchema = new mongoose.Schema({
         timestamp: Date
     },
     linkedEntities: {
-        emergencyId: String,
-        severityLogId: String,
-        disasterZoneId: String,
-        routeId: String
+        emergencyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Emergency' }, // Changed to ObjectId
+        severityLogId: { type: mongoose.Schema.Types.ObjectId, ref: 'SeverityLog' }, // Changed to ObjectId
+        disasterZoneId: { type: mongoose.Schema.Types.ObjectId, ref: 'DisasterZone' }, // Changed to ObjectId
+        routeId: { type: mongoose.Schema.Types.ObjectId, ref: 'RoutingHistory' } // Changed to ObjectId
     },
-    userId: String
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // Changed to ObjectId
 }, {
     timestamps: true
 });

@@ -1,9 +1,11 @@
 // ---------------------- RecipientPage.jsx ----------------------
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { PlusCircle, Loader, XCircle, CheckCircle2 } from 'lucide-react';
 import '../css/InventoryPage.css';
 import RoleToggle from "../components/RoleToggle";
 import { useNavigate } from "react-router-dom";
+import { UserContext } from "./UserContext";
+import { authenticatedFetch } from "../utils/api";
 
 const REQUEST_API = 'http://localhost:5000/api/requests';
 const INVENTORY_API = 'http://localhost:5000/api/inventory/items';
@@ -23,6 +25,7 @@ const RecipientPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
+  const { token, userId } = useContext(UserContext);
 
   const navigate = useNavigate();
 
@@ -38,8 +41,8 @@ const RecipientPage = () => {
     setError(null);
     try {
       const [invRes, reqRes] = await Promise.all([
-        fetch(INVENTORY_API),
-        fetch(REQUEST_API),
+        authenticatedFetch(INVENTORY_API, {}, token),
+        authenticatedFetch(`${REQUEST_API}`, {}, token),
       ]);
 
       const invData = await invRes.json();
@@ -56,7 +59,7 @@ const RecipientPage = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (message || error) {
@@ -75,6 +78,12 @@ const RecipientPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!userId) {
+      setError("User authentication required. Please log in again.");
+      return;
+    }
+
     if (formData.quantity <= 0) {
       setError("Quantity must be greater than zero");
       return;
@@ -85,11 +94,15 @@ const RecipientPage = () => {
     setMessage('');
 
     try {
-      const response = await fetch(REQUEST_API, {
+      const requestData = {
+        ...formData,
+        requesterId: userId
+      };
+
+      const response = await authenticatedFetch(REQUEST_API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+        body: JSON.stringify(requestData),
+      }, token);
 
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to submit request');
@@ -101,6 +114,16 @@ const RecipientPage = () => {
       setError(`Submission failed: ${err.message}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'text-green-600';
+      case 'rejected': return 'text-red-600';
+      case 'delivered': return 'text-blue-600';
+      case 'fulfilled': return 'text-purple-600';
+      default: return 'text-yellow-600';
     }
   };
 
@@ -187,7 +210,11 @@ const RecipientPage = () => {
                   <td>{req.category}</td>
                   <td>{req.quantity}</td>
                   <td>{req.location}</td>
-                  <td className={`status-tag ${req.status}`}>{req.status}</td>
+                  <td>
+                    <span className={getStatusColor(req.status)}>
+                      {req.status}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

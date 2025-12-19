@@ -3,7 +3,7 @@
     min-height: 100vh;
     background: var(--primary-bg);
     padding: 2rem;
-    padding-top: 120px; /* Space for fixed header */
+    /* padding-top removed to fix excessive spacing */
 }
 
 .dispatch-tracker.loading {
@@ -24,32 +24,53 @@
 }
 
 .tracker-header {
-    margin-bottom: 2rem;
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeInDown 0.8s ease-out;
 }
 
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hide separate container if it exists in markup, or style it to be centered */
 .header-content {
     display: flex;
+    justify-content: center;
     align-items: center;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .header-icon {
-    width: 48px;
-    height: 48px;
-    color: var(--accent-color);
+    width: 42px;
+    height: 42px;
+    color: #FFC107;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .tracker-header h2 {
     margin: 0;
-    color: var(--heading-color);
-    font-size: 2rem;
+    color: #FFC107;
+    font-size: 3rem;
+    font-weight: 800;
     font-family: 'Montserrat', sans-serif;
+    letter-spacing: -0.02em;
+    text-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
 }
 
 .tracker-header p {
-    margin: 0.25rem 0 0 0;
-    color: var(--muted-text);
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1.2rem;
 }
 
 .stats-bar {
@@ -87,7 +108,10 @@
     display: grid;
     grid-template-columns: 350px 1fr;
     gap: 1.5rem;
-    height: calc(100vh - 250px);
+    min-height: calc(100vh - 200px);
+    /* Adjusted for better responsiveness */
+    align-items: start;
+    /* Align items to the start of the grid */
 }
 
 .tracker-content:has(.detail-panel) {
@@ -227,6 +251,8 @@
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid var(--border-color);
+    flex-grow: 1;
+    /* Ensure map takes available space */
 }
 
 .map-legend {
@@ -454,27 +480,64 @@
 /* Responsive */
 @media (max-width: 1400px) {
     .tracker-content {
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 1fr 350px;
+        /* Two columns: Map + Detail Panel */
+        /* Removed 300px 1fr, so it uses the whole width when detail-panel is fixed */
+    }
+
+    .dispatch-list {
+        display: none;
+        /* Hide dispatch list on smaller screens when detail panel is open */
+    }
+
+    .map-view {
+        width: auto;
+        height: calc(100vh - 200px);
+        /* Adjust height for visible header/footer */
     }
 
     .detail-panel {
-        right: 10px;
-        width: 340px;
+        position: relative;
+        /* Make it part of the grid flow on larger tablets */
+        top: auto;
+        bottom: auto;
+        left: auto;
+        width: auto;
+        /* Let grid define width */
+        box-shadow: none;
     }
 }
 
 @media (max-width: 1024px) {
+    .dispatch-tracker {
+        padding: 1rem;
+    }
+
     .tracker-content {
         grid-template-columns: 1fr;
-        height: auto;
+        /* Single column */
+        min-height: auto;
+        /* Let content define height */
+        flex-direction: column;
+        /* Stack elements vertically */
     }
 
     .dispatch-list {
+        display: block;
+        /* Show dispatch list on mobile */
         max-height: 400px;
+        width: 100%;
+        /* Ensure full width */
+        margin-bottom: 1.5rem;
+        /* Add space below list */
     }
 
     .map-view {
         height: 500px;
+        width: 100%;
+        /* Ensure full width */
+        margin-bottom: 1.5rem;
+        /* Add space below map */
     }
 
     .detail-panel {
@@ -485,6 +548,17 @@
         width: 100%;
         height: 60vh;
         border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 16px var(--shadow-color);
+        /* Shadow on top */
+        transform: translateY(100%);
+        /* Initially hidden */
+        transition: transform 0.3s ease-out;
+        /* Smooth transition */
+    }
+
+    /* When selected, show panel */
+    .detail-panel.active {
+        transform: translateY(0%);
     }
 }
 
@@ -563,4 +637,26 @@
 .action-btn.delete-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Dispatch Type Indicators */
+.dispatch-type {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.auto-dispatch {
+    background: #10b981;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.manual-dispatch {
+    background: #3b82f6;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
 }

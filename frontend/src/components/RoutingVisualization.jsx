@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle } from 'react-leaflet';
-import axios from 'axios';
 import { Navigation, AlertTriangle, Clock, MapPin, Route } from 'lucide-react';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 import 'leaflet/dist/leaflet.css';
 
 /**
@@ -9,8 +10,15 @@ import 'leaflet/dist/leaflet.css';
  * Shows real-time routing with disaster zone avoidance
  */
 const RoutingVisualization = () => {
-    const [origin, setOrigin] = useState({ lat: 30.7171, lon: 76.8537, name: 'Response Center' });
-    const [destination, setDestination] = useState({ lat: 30.7200, lon: 76.8600, name: 'Emergency Location' });
+    const { token } = useContext(UserContext);
+    const [originLat, setOriginLat] = useState(30.7171);
+    const [originLon, setOriginLon] = useState(76.8537);
+    const [originName, setOriginName] = useState(''); // Initialize as empty
+
+    const [destinationLat, setDestinationLat] = useState(30.7200);
+    const [destinationLon, setDestinationLon] = useState(76.8600);
+    const [destinationName, setDestinationName] = useState(''); // Initialize as empty
+
     const [route, setRoute] = useState(null);
     const [loading, setLoading] = useState(false);
     const [disasterZones, setDisasterZones] = useState([]);
@@ -18,16 +26,43 @@ const RoutingVisualization = () => {
     const [mapKey, setMapKey] = useState(0); // Force map re-render
 
     useEffect(() => {
-        fetchDisasterZones();
-    }, []);
+        if (token) {
+            fetchDisasterZones();
+        }
+    }, [token]);
 
     const fetchDisasterZones = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/agents/disaster-zones?status=active');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/agents/disaster-zones?status=active');
             setDisasterZones(response.data.data || []);
         } catch (error) {
             console.error('Failed to fetch disaster zones:', error);
         }
+    };
+
+    const getCurrentLocation = (type) => {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                if (type === 'origin') {
+                    setOriginLat(position.coords.latitude);
+                    setOriginLon(position.coords.longitude);
+                    setOriginName('');
+                } else {
+                    setDestinationLat(position.coords.latitude);
+                    setDestinationLon(position.coords.longitude);
+                    setDestinationName('');
+                }
+            },
+            (error) => {
+                alert('Unable to get location: ' + error.message);
+            }
+        );
     };
 
     const calculateRoute = async () => {
@@ -35,9 +70,24 @@ const RoutingVisualization = () => {
         setError(null);
         
         try {
-            const response = await axios.post('http://localhost:5000/api/agents/calculate-route', {
-                origin: origin,
-                destination: destination,
+            let originToSend = {};
+            if (originName.trim() !== '') { // Check if originName is not empty
+                originToSend = { name: originName.trim() };
+            } else {
+                originToSend = { lat: originLat, lon: originLon };
+            }
+
+            let destinationToSend = {};
+            if (destinationName.trim() !== '') { // Check if destinationName is not empty
+                destinationToSend = { name: destinationName.trim() };
+            } else {
+                destinationToSend = { lat: destinationLat, lon: destinationLon };
+            }
+
+            const api = createAuthenticatedAxios(token);
+            const response = await api.post('/api/agents/calculate-route', {
+                origin: originToSend,
+                destination: destinationToSend,
                 options: {
                     requestType: 'emergency_response',
                     severity: 'high'
@@ -57,6 +107,18 @@ const RoutingVisualization = () => {
                 }
                 
                 setRoute(response.data);
+                // Update coordinate states based on the geocoded response from the backend
+                if (response.data.route.origin) {
+                    setOriginLat(response.data.route.origin.lat);
+                    setOriginLon(response.data.route.origin.lon);
+                    setOriginName(response.data.route.origin.name);
+                }
+                if (response.data.route.destination) {
+                    setDestinationLat(response.data.route.destination.lat);
+                    setDestinationLon(response.data.route.destination.lon);
+                    setDestinationName(response.data.route.destination.name);
+                }
+
                 setMapKey(prev => prev + 1); // Force map update
             } else {
                 setError(response.data.error || 'Route calculation failed');
@@ -79,8 +141,8 @@ const RoutingVisualization = () => {
     };
 
     const center = [
-        (origin.lat + destination.lat) / 2,
-        (origin.lon + destination.lon) / 2
+        (originLat + destinationLat) / 2,
+        (originLon + destinationLon) / 2
     ];
 
     return (
@@ -94,96 +156,76 @@ const RoutingVisualization = () => {
                 <div className="location-inputs">
                     <div className="input-group">
                         <div className="input-header">
-                            <label>Origin (Response Center)</label>
+                            <label>Origin (Place Name or Latitude)</label>
                             <button
                                 className="location-picker-btn"
-                                onClick={() => {
-                                    if (navigator.geolocation) {
-                                        navigator.geolocation.getCurrentPosition(
-                                            (position) => {
-                                                setOrigin({
-                                                    ...origin,
-                                                    lat: position.coords.latitude,
-                                                    lon: position.coords.longitude,
-                                                    name: 'Current Location'
-                                                });
-                                            },
-                                            (error) => {
-                                                alert('Unable to get location: ' + error.message);
-                                            }
-                                        );
-                                    } else {
-                                        alert('Geolocation is not supported by your browser');
-                                    }
-                                }}
+                                onClick={() => getCurrentLocation('origin')}
                                 title="Use current location as origin"
                             >
                                 <MapPin size={16} />
                                 Use My Location
                             </button>
                         </div>
+                        <input
+                            type="text"
+                            value={originName}
+                            onChange={(e) => setOriginName(e.target.value)}
+                            placeholder="e.g., Response Center, New York"
+                        />
                         <div className="coordinate-inputs">
                             <input
                                 type="number"
                                 step="0.0001"
-                                value={origin.lat}
-                                onChange={(e) => setOrigin({...origin, lat: parseFloat(e.target.value)})}
+                                value={originLat}
+                                onChange={(e) => setOriginLat(parseFloat(e.target.value))}
                                 placeholder="Latitude"
+                                disabled={!!originName}
                             />
                             <input
                                 type="number"
                                 step="0.0001"
-                                value={origin.lon}
-                                onChange={(e) => setOrigin({...origin, lon: parseFloat(e.target.value)})}
+                                value={originLon}
+                                onChange={(e) => setOriginLon(parseFloat(e.target.value))}
                                 placeholder="Longitude"
+                                disabled={!!originName}
                             />
                         </div>
                     </div>
 
                     <div className="input-group">
                         <div className="input-header">
-                            <label>Destination (Emergency Location)</label>
+                            <label>Destination (Place Name or Latitude)</label>
                             <button
                                 className="location-picker-btn"
-                                onClick={() => {
-                                    if (navigator.geolocation) {
-                                        navigator.geolocation.getCurrentPosition(
-                                            (position) => {
-                                                setDestination({
-                                                    ...destination,
-                                                    lat: position.coords.latitude,
-                                                    lon: position.coords.longitude,
-                                                    name: 'Current Location'
-                                                });
-                                            },
-                                            (error) => {
-                                                alert('Unable to get location: ' + error.message);
-                                            }
-                                        );
-                                    } else {
-                                        alert('Geolocation is not supported by your browser');
-                                    }
-                                }}
+                                onClick={() => getCurrentLocation('destination')}
                                 title="Use current location as destination"
                             >
                                 <MapPin size={16} />
                                 Use My Location
                             </button>
                         </div>
+                        <input
+                            type="text"
+                            value={destinationName}
+                            onChange={(e) => setDestinationName(e.target.value)}
+                            placeholder="e.g., Emergency Location, Los Angeles"
+                        />
                         <div className="coordinate-inputs">
                             <input
                                 type="number"
                                 step="0.0001"
-                                value={destination.lat}
-                                onChange={(e) => setDestination({...destination, lat: parseFloat(e.target.value)})}
+                                value={destinationLat}
+                                onChange={(e) => setDestinationLat(parseFloat(e.target.value))}
                                 placeholder="Latitude"
+                                disabled={!!destinationName}
                             />
                             <input
                                 type="number"
                                 step="0.0001"
-                                value={destination.lon}
-                                onChange={(e) => setDestination({...destination, lon: parseFloat(e.target.value)})}
+                                value={destinationLon}
+                                onChange={(e) => setDestinationLon(parseFloat(e.target.value))}
                                 placeholder="Longitude"
+                                disabled={!!destinationName}
                             />
                         </div>
                     </div>
@@ -261,18 +303,20 @@ const RoutingVisualization = () => {
                     />
 
                     {/* Origin Marker */}
-                    <Marker position={[origin.lat, origin.lon]}>
+                    <Marker position={[originLat, originLon]}>
                         <Popup>
                             <strong>Origin</strong><br />
-                            {origin.name}
+                            {originName || 'Response Center'}<br />
+                            {originLat.toFixed(4)}, {originLon.toFixed(4)}
                         </Popup>
                     </Marker>
 
                     {/* Destination Marker */}
-                    <Marker position={[destination.lat, destination.lon]}>
+                    <Marker position={[destinationLat, destinationLon]}>
                         <Popup>
                             <strong>Destination</strong><br />
-                            {destination.name}
+                            {destinationName || 'Emergency Location'}<br />
+                            {destinationLat.toFixed(4)}, {destinationLon.toFixed(4)}
                         </Popup>
                     </Marker>
 

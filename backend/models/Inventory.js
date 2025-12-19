@@ -8,7 +8,7 @@ const inventoryItemSchema = new mongoose.Schema({
     minThreshold: { type: Number, default: 0 },
     maxCapacity: { type: Number, default: 1000 },
     unit: { type: String, required: true },
-    location: { type: String, required: true }, // Should eventually be a reference to a Location ID
+    location: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: true }, // Changed to ObjectId
     lastUpdated: { type: Date, default: Date.now },
     status: { type: String, required: true, enum: ['critical', 'low', 'adequate'] },
     cost: { type: Number, required: true, min: 0 },
@@ -22,6 +22,10 @@ const locationSchema = new mongoose.Schema({
     // Capacity is hard to calculate dynamically; here we store the raw string from the mock. 
     // In a real app, this would be calculated or stored as max_volume.
     capacity: { type: String }, 
+    coordinates: {
+        lat: { type: Number, required: true },
+        lon: { type: Number, required: true }
+    }
 }, { timestamps: true });
 
 // 3. Transaction Schema
@@ -60,8 +64,10 @@ const donationSchema = new mongoose.Schema({
     category: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1 },
     location: { type: String, required: true },
-    status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected', 'delivered'] },
+    status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected', 'delivered', 'fulfilled'] },
     priority: { type: String, default: 'normal', enum: ['low', 'normal', 'high'] },
+    notes: { type: String, default: '' },
+    fulfilledAt: { type: Date },
     timestamp: { type: Date, default: Date.now },
   }, { timestamps: true });
   

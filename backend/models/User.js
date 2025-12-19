@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
     },
     role: { // Updated enum to include the four new roles
         type: String,
-        enum: ['admin', 'branch manager', 'volunteer', 'affected citizen'],
+        enum: ['admin', 'branch manager', 'volunteer', 'refugee'],
         default: 'volunteer'
     },
 
@@ -69,34 +69,62 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 const User = mongoose.model('User', userSchema);
 export default User;
 
-// --- EXPORT MOCK DATA FOR SEEDING ---
+// --- EXPORT SEED DATA FOR PUNJAB, INDIA ---
 export const SEED_USERS = [
     {
-        username: 'admin@edu.in',
+        username: 'admin@punjab.gov.in',
         password: 'AdminPassword123',
         role: 'admin',
-        firstName: 'System',
-        lastName: 'Admin',
-        country: 'USA',
-        state: 'Texas',
-        city: 'Houston',
-        address: '100 Main St',
+        firstName: 'Rajesh',
+        lastName: 'Kumar',
+        country: 'India',
+        state: 'Punjab',
+        city: 'Chandigarh',
+        address: 'Sector 17, Chandigarh',
         companyType: 'Government Employee',
-        occupation: 'System Administrator',
+        occupation: 'Emergency Response Administrator',
         volunteerSkills: ['Transport', 'Information Supply', 'Fundraising']
     },
     {
-        username: 'volunteer',
+        username: 'branchmanager@punjab.gov.in',
+        password: 'BranchManager123',
+        role: 'branch manager',
+        firstName: 'Preet',
+        lastName: 'Singh',
+        country: 'India',
+        state: 'Punjab',
+        city: 'Ludhiana',
+        address: 'Civil Lines, Ludhiana',
+        companyType: 'Government Employee',
+        occupation: 'Regional Emergency Manager',
+        volunteerSkills: ['Transport', 'Information Supply']
+    },
+    {
+        username: 'volunteer@ngo.org',
         password: 'VolunteerPass123',
         role: 'volunteer',
-        firstName: 'Emma',
-        lastName: 'Stone',
-        country: 'USA',
-        state: 'Florida',
-        city: 'Miami',
-        address: '200 River Rd',
+        firstName: 'Simran',
+        lastName: 'Kaur',
+        country: 'India',
+        state: 'Punjab',
+        city: 'Amritsar',
+        address: 'Golden Temple Road, Amritsar',
+        companyType: 'NGO',
+        occupation: 'Relief Coordinator',
+        volunteerSkills: ['Transport', 'Medical Aid', 'Fundraising']
+    },
+    {
+        username: 'refugee@punjab.in',
+        password: 'RefugeePass123',
+        role: 'refugee',
+        firstName: 'Harpreet',
+        lastName: 'Sharma',
+        country: 'India',
+        state: 'Punjab',
+        city: 'Jalandhar',
+        address: 'Model Town, Jalandhar',
         companyType: 'Individual',
-        occupation: 'Logistics Coordinator',
-        volunteerSkills: ['Transport']
+        occupation: 'Displaced Person',
+        volunteerSkills: []
     },
 ];

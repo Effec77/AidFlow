@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { PackagePlus, Loader, XCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RoleToggle from "../components/RoleToggle";
+import { UserContext } from "./UserContext";
+import { authenticatedFetch } from "../utils/api";
 import "../css/InventoryPage.css";
 
 const DONATION_API = "http://localhost:5000/api/donations";
-const INVENTORY_API = "http://localhost:5000/api/inventory/items";
 const CATEGORIES = ["Medical", "Food", "Shelter", "Equipment", "Water"];
 
 const initialFormData = {
@@ -17,39 +18,37 @@ const initialFormData = {
 
 const VolunteerPage = () => {
   const [donations, setDonations] = useState([]);
-  const [inventory, setInventory] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState(null);
+  const { token, userId } = useContext(UserContext);
 
   const navigate = useNavigate();
 
   const handleRoleChange = (role) => {
     if (role === "admin") navigate("/inventory");
-    else if (role === "recipient") navigate("/recipient");
+    else if (role === "refugee") navigate("/refugee");
   };
 
-  const fetchData = async () => {
+  const fetchDonations = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [invRes, donRes] = await Promise.all([
-        fetch(INVENTORY_API),
-        fetch(DONATION_API),
-      ]);
-      setInventory(await invRes.json());
-      setDonations(await donRes.json());
+      const response = await authenticatedFetch(`${DONATION_API}`, {}, token);
+      setDonations(await response.json());
     } catch (err) {
-      setError(`Failed to load data: ${err.message}`);
+      setError(`Failed to load donations: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (token) {
+      fetchDonations();
+    }
+  }, [token]);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -58,21 +57,35 @@ const VolunteerPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!userId) {
+      setError("User authentication required. Please log in again.");
+      return;
+    }
+
     setIsLoading(true);
     setMessage("");
     setError(null);
 
     try {
-      const res = await fetch(DONATION_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const donationData = {
+        ...formData,
+        volunteerId: userId
+      };
 
-      if (!res.ok) throw new Error("Failed to donate");
+      const res = await authenticatedFetch(DONATION_API, {
+        method: "POST",
+        body: JSON.stringify(donationData),
+      }, token);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to donate");
+      }
+      
       setMessage(`Donation for "${formData.itemName}" added!`);
       setFormData(initialFormData);
-      fetchData();
+      fetchDonations();
     } catch (err) {
       setError(err.message);
     } finally {

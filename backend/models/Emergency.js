@@ -1,5 +1,17 @@
 import mongoose from 'mongoose';
 
+const WaypointSchema = new mongoose.Schema({
+    lat: { type: Number, required: true },
+    lon: { type: Number, required: true }
+}, { _id: false });
+
+const RouteSchema = new mongoose.Schema({
+    distance: { type: Number, required: true },
+    duration: { type: Number, required: true },
+    eta: { type: Date },
+    waypoints: [WaypointSchema] // Use the WaypointSchema
+}, { _id: false });
+
 const emergencyRequestSchema = new mongoose.Schema({
     emergencyId: {
         type: String,
@@ -7,7 +19,8 @@ const emergencyRequestSchema = new mongoose.Schema({
         unique: true
     },
     userId: {
-        type: String, // Changed to String to handle demo users
+        type: mongoose.Schema.Types.ObjectId, // Changed to ObjectId
+        ref: 'User',
         required: true
     },
     location: {
@@ -40,18 +53,6 @@ const emergencyRequestSchema = new mongoose.Schema({
             immediate: [String],
             secondary: [String],
             quantities: { type: Map, of: Number }
-        },
-        routing: {
-            origin: String,
-            destination: {
-                lat: Number,
-                lon: Number
-            },
-            route: [mongoose.Schema.Types.Mixed],
-            distance: Number,
-            eta: String,
-            vehicles: [String],
-            waypoints: [mongoose.Schema.Types.Mixed]
         }
     },
     status: {
@@ -65,7 +66,7 @@ const emergencyRequestSchema = new mongoose.Schema({
     },
     dispatchDetails: {
         dispatchedAt: Date,
-        dispatchedBy: String,
+        dispatchedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Changed to ObjectId
         centers: [{
             centerId: String,
             centerName: String,
@@ -76,12 +77,7 @@ const emergencyRequestSchema = new mongoose.Schema({
                 quantity: Number,
                 unit: String
             }],
-            route: {
-                distance: Number,
-                duration: Number,
-                eta: String,
-                waypoints: [mongoose.Schema.Types.Mixed]
-            }
+            route: RouteSchema // Use the new RouteSchema
         }],
         totalResources: { type: Map, of: Number },
         estimatedArrival: Date,

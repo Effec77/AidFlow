@@ -12,9 +12,17 @@
 }
 
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* --- Login Card --- */
@@ -39,8 +47,15 @@
 }
 
 @keyframes fadeInUp {
-  from { transform: translateY(30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 body.light .login-card {
@@ -50,11 +65,19 @@ body.light .login-card {
 
 /* --- Section Title --- */
 .section-title {
-  font-size: 2.3rem;
-  margin-bottom: 0.5rem;
-  color: var(--heading-color);
-  letter-spacing: 0.5px;
-  transition: color 0.4s ease;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: #FFC107;
+  /* Gold to match other headers */
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+  text-transform: none;
+  text-align: center;
+  text-wrap: balance;
+  /* Ensures balanced lines if it wraps */
+  text-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
 }
 
 /* --- Description --- */
@@ -91,7 +114,8 @@ body.light .login-card {
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.25s ease;
-  box-sizing: border-box; /* ensures consistent sizing */
+  box-sizing: border-box;
+  /* ensures consistent sizing */
 }
 
 body.light .form-field {
@@ -169,12 +193,15 @@ body.light .form-field {
     padding: 2rem 1.5rem;
     margin: 1rem;
   }
+
   .section-title {
     font-size: 1.9rem;
   }
+
   .login-form {
     gap: 1rem;
   }
+
   .form-field {
     padding: 0.85rem 0.95rem;
   }

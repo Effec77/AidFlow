@@ -1,23 +1,43 @@
 {
-  "name": "backend",
+  "name": "aidflow-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AidFlow Emergency Response System - Backend API with AI-powered decision making",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "seed": "node seed.js",
+    "seed-all": "node seedAll.js",
+    "seed-users": "node seedUsers.js",
+    "test": "echo \"No tests specified\" && exit 0",
+    "lint": "echo \"No linting configured\" && exit 0",
+    "build": "echo \"No build step required\" && exit 0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "emergency-response",
+    "disaster-management",
+    "ai-powered",
+    "groq",
+    "mongodb",
+    "express",
+    "nodejs",
+    "punjab",
+    "india"
+  ],
+  "author": "AidFlow Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "csvtojson": "^2.0.13",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "groq-sdk": "^0.37.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.2",
     "node-cron": "^4.2.1",
@@ -25,5 +45,13 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/aidflow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/aidflow/issues"
+  },
+  "homepage": "https://github.com/your-username/aidflow#readme"
 }

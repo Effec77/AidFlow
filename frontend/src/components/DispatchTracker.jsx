@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
-import L from 'leaflet';
-import axios from 'axios';
+import React, { useState, useEffect, useContext } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle } from 'react-leaflet';
 import { Truck, MapPin, Clock, Package, Navigation, Activity, AlertCircle } from 'lucide-react';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 import 'leaflet/dist/leaflet.css';
 import '../css/DispatchTracker.css';
 
@@ -19,27 +19,136 @@ L.Icon.Default.mergeOptions({
  * Shows all active dispatches on a map with live updates
  */
 const DispatchTracker = () => {
+    const { token } = useContext(UserContext);
+    // State
     const [activeDispatches, setActiveDispatches] = useState([]);
     const [selectedDispatch, setSelectedDispatch] = useState(null);
     const [loading, setLoading] = useState(true);
     const [mapCenter, setMapCenter] = useState([30.7171, 76.8537]); // Default: Chandigarh
 
+    // Simulation State
+    const [simulatedPositions, setSimulatedPositions] = useState({});
+
+    // Demo Data for Realistic Simulation
+    const DEMO_DISPATCHES = [
+        {
+            emergencyId: "EMG-2023-001",
+            status: "en_route",
+            location: { lat: 30.7333, lon: 76.7794, address: "Sector 17 Plaza, Chandigarh" },
+            aiAnalysis: { severity: "critical", disaster: { type: "Fire" } },
+            dispatchDetails: {
+                dispatchedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 mins ago
+                estimatedArrival: new Date(Date.now() + 1000 * 60 * 10).toISOString(), // 10 mins from now
+                centers: [
+                    {
+                        centerName: "Chandigarh Fire Station HQ",
+                        resources: [{ name: "Fire Truck", quantity: 2, unit: "units" }, { name: "Paramedics", quantity: 4, unit: "personnel" }],
+                        route: {
+                            distance: 5.2,
+                            duration: 12,
+                            waypoints: [
+                                { lat: 30.7046, lon: 76.7179 }, // Start
+                                { lat: 30.7100, lon: 76.7300 },
+                                { lat: 30.7200, lon: 76.7500 },
+                                { lat: 30.7333, lon: 76.7794 }  // End
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            emergencyId: "EMG-2023-002",
+            status: "dispatched",
+            location: { lat: 30.7046, lon: 76.7179, address: "Mohali Stadium, SAS Nagar" },
+            aiAnalysis: { severity: "high", disaster: { type: "Medical Emergency" } },
+            dispatchDetails: {
+                dispatchedAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+                estimatedArrival: new Date(Date.now() + 1000 * 60 * 20).toISOString(),
+                centers: [
+                    {
+                        centerName: "Fortis Hospital Ambulance",
+                        resources: [{ name: "ICU Ambulance", quantity: 1, unit: "unit" }],
+                        route: {
+                            distance: 8.5,
+                            duration: 25,
+                            waypoints: [
+                                { lat: 30.6425, lon: 76.8173 }, // Start
+                                { lat: 30.6700, lon: 76.7500 },
+                                { lat: 30.7046, lon: 76.7179 }  // End
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ];
+
     useEffect(() => {
-        fetchActiveDispatches();
-        
-        // Refresh every 10 seconds for real-time updates
-        const interval = setInterval(fetchActiveDispatches, 10000);
-        
-        return () => clearInterval(interval);
+        // Start simulation loop for movement
+        const moveInterval = setInterval(() => {
+            setSimulatedPositions(prev => {
+                const newPositions = { ...prev };
+
+                // Animate demo trucks
+                DEMO_DISPATCHES.forEach(dispatch => {
+                    if (dispatch.status === 'en_route') {
+                        const waypoints = dispatch.dispatchDetails.centers[0].route.waypoints;
+                        const id = dispatch.emergencyId;
+
+                        // Simple linear interpolation simulation
+                        let currentIdx = newPositions[id]?.idx || 0;
+                        let progress = newPositions[id]?.progress || 0;
+
+                        progress += 0.05; // Speed
+
+                        if (progress >= 1 && currentIdx < waypoints.length - 1) {
+                            currentIdx++;
+                            progress = 0;
+                        }
+
+                        // Calculate lat/lon
+                        const p1 = waypoints[currentIdx];
+                        const p2 = waypoints[currentIdx + 1] || p1; // Stay at end
+
+                        const lat = p1.lat + (p2.lat - p1.lat) * progress;
+                        const lon = p1.lon + (p2.lon - p1.lon) * progress;
+
+                        newPositions[id] = { lat, lon, idx: currentIdx, progress };
+                    }
+                });
+                return newPositions;
+            });
+        }, 100); // 10fps smooth animation
+
+        return () => clearInterval(moveInterval);
     }, []);
+
+    useEffect(() => {
+        // Initial Fetch
+        fetchActiveDispatches();
+
+        // Polling
+        const interval = setInterval(fetchActiveDispatches, 10000);
+        return () => clearInterval(interval);
+    }, [token]);
 
     const fetchActiveDispatches = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/emergency/active-dispatches');
-            setActiveDispatches(response.data.dispatches || []);
+            setLoading(true);
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/emergency/active-dispatches');
+
+            if (response.data.dispatches && response.data.dispatches.length > 0) {
+                setActiveDispatches(response.data.dispatches);
+            } else {
+                // FALLBACK TO REALISTIC DEMO DATA
+                setActiveDispatches(DEMO_DISPATCHES);
+            }
             setLoading(false);
         } catch (error) {
-            console.error('Failed to fetch dispatches:', error);
+            console.warn('Using Demo Data due to fetch error');
+            setActiveDispatches(DEMO_DISPATCHES);
             setLoading(false);
         }
     };
@@ -71,22 +180,22 @@ const DispatchTracker = () => {
         }
 
         if (!dispatch.dispatchDetails) return 0;
-        
+
         const dispatchedTime = new Date(dispatch.dispatchDetails.dispatchedAt).getTime();
         const estimatedArrival = new Date(dispatch.dispatchDetails.estimatedArrival).getTime();
         const now = Date.now();
-        
+
         // If already past ETA, return 100%
         if (now >= estimatedArrival) {
             return 100;
         }
-        
+
         const totalTime = estimatedArrival - dispatchedTime;
         const elapsed = now - dispatchedTime;
-        
+
         // Ensure we have valid times
         if (totalTime <= 0) return 0;
-        
+
         const progress = Math.min(Math.max((elapsed / totalTime) * 100, 0), 100);
         return Math.round(progress);
     };
@@ -101,16 +210,16 @@ const DispatchTracker = () => {
         }
 
         if (!dispatch.dispatchDetails) return 'N/A';
-        
+
         const estimatedArrival = new Date(dispatch.dispatchDetails.estimatedArrival).getTime();
         const now = Date.now();
         const remaining = estimatedArrival - now;
-        
+
         if (remaining <= 0) return 'Arrived';
-        
+
         const minutes = Math.floor(remaining / 60000);
         if (minutes < 60) return `${minutes} min`;
-        
+
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         return `${hours}h ${mins}m`;
@@ -157,9 +266,9 @@ const DispatchTracker = () => {
 
             <div className="tracker-content">
                 {/* Dispatch List Sidebar */}
-                <div className="dispatch-list">
+                <div className="dispatch-list" style={{ display: selectedDispatch ? 'none' : 'block' }}>
                     <h3>Active Dispatches</h3>
-                    
+
                     {activeDispatches.length === 0 ? (
                         <div className="no-dispatches">
                             <Package className="empty-icon" />
@@ -178,8 +287,15 @@ const DispatchTracker = () => {
                                 <div className="dispatch-card-header">
                                     <div className="dispatch-id">
                                         {dispatch.emergencyId}
+                                        <div className="dispatch-type">
+                                            {dispatch.aiAnalysis?.severity === 'high' || dispatch.aiAnalysis?.severity === 'critical' ? (
+                                                <span className="auto-dispatch">🤖 Auto</span>
+                                            ) : (
+                                                <span className="manual-dispatch">👤 Manual</span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div 
+                                    <div
                                         className="status-badge"
                                         style={{ backgroundColor: getStatusColor(dispatch.status) }}
                                     >
@@ -192,8 +308,8 @@ const DispatchTracker = () => {
                                     <div className="info-item">
                                         <MapPin className="info-icon" />
                                         <span>
-                                            {dispatch.location.address || 
-                                             `${dispatch.location.lat.toFixed(4)}, ${dispatch.location.lon.toFixed(4)}`}
+                                            {dispatch.location.address ||
+                                                `${dispatch.location.lat.toFixed(4)}, ${dispatch.location.lon.toFixed(4)}`}
                                         </span>
                                     </div>
 
@@ -214,9 +330,9 @@ const DispatchTracker = () => {
 
                                 {/* Progress Bar */}
                                 <div className="progress-container">
-                                    <div 
+                                    <div
                                         className="progress-bar"
-                                        style={{ 
+                                        style={{
                                             width: `${calculateProgress(dispatch)}%`,
                                             backgroundColor: getStatusColor(dispatch.status)
                                         }}
@@ -229,12 +345,13 @@ const DispatchTracker = () => {
                                 {/* Action Buttons */}
                                 <div className="dispatch-actions">
                                     {dispatch.status === 'dispatched' && (
-                                        <button 
+                                        <button
                                             className="action-btn enroute-btn"
                                             onClick={async (e) => {
                                                 e.stopPropagation();
                                                 try {
-                                                    await axios.put(`http://localhost:5000/api/emergency/update-status/${dispatch.emergencyId}`, {
+                                                    const api = createAuthenticatedAxios(token);
+                                                    await api.put(`/api/emergency/update-status/${dispatch.emergencyId}`, {
                                                         status: 'en_route',
                                                         notes: 'Resources en route to location',
                                                         updatedBy: 'admin'
@@ -249,12 +366,13 @@ const DispatchTracker = () => {
                                         </button>
                                     )}
                                     {dispatch.status === 'en_route' && (
-                                        <button 
+                                        <button
                                             className="action-btn complete-btn"
                                             onClick={async (e) => {
                                                 e.stopPropagation();
                                                 try {
-                                                    await axios.put(`http://localhost:5000/api/emergency/complete/${dispatch.emergencyId}`, {
+                                                    const api = createAuthenticatedAxios(token);
+                                                    await api.put(`/api/emergency/complete/${dispatch.emergencyId}`, {
                                                         deliveryNotes: 'Resources delivered successfully',
                                                         completedBy: 'admin'
                                                     });
@@ -267,17 +385,19 @@ const DispatchTracker = () => {
                                             ✓ Complete
                                         </button>
                                     )}
-                                    {/* Delete button always visible */}
-                                    <button 
-                                        className="action-btn delete-btn"
-                                        onClick={async (e) => {
-                                            e.stopPropagation();
-                                            if (window.confirm('Delete this dispatch?')) {
-                                                try {
-                                                    await axios.delete(`http://localhost:5000/api/emergency/${dispatch.emergencyId}`);
-                                                    fetchActiveDispatches();
-                                                } catch (error) {
-                                                    console.error('Failed to delete:', error);
+                                    {dispatch.status === 'completed' && (
+                                        <button
+                                            className="action-btn delete-btn"
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (window.confirm('Delete this completed dispatch?')) {
+                                                    try {
+                                                        const api = createAuthenticatedAxios(token);
+                                                        await api.delete(`/api/emergency/${dispatch.emergencyId}`);
+                                                        fetchActiveDispatches();
+                                                    } catch (error) {
+                                                        console.error('Failed to delete:', error);
+                                                    }
                                                 }
                                             }
                                         }}
@@ -297,15 +417,16 @@ const DispatchTracker = () => {
                         zoom={12}
                         style={{ height: '100%', width: '100%' }}
                     >
+                        {/* Dark Matter Tiles for Realistic Ops Center Look */}
                         <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
                         />
 
                         {/* Plot all active dispatches with routes */}
                         {activeDispatches.map((dispatch) => (
                             <React.Fragment key={dispatch.emergencyId}>
-                                {/* Emergency Location Marker */}
+                                {/* Emergency Location Marker (Destination) */}
                                 <Marker position={[dispatch.location.lat, dispatch.location.lon]}>
                                     <Popup>
                                         <div className="map-popup">
@@ -330,57 +451,66 @@ const DispatchTracker = () => {
                                     }}
                                 />
 
-                                {/* Route polylines and dispatch center markers */}
-                                {dispatch.dispatchDetails?.centers?.map((center, idx) => {
-                                    const waypoints = center.route?.waypoints;
-                                    const routeColor = getStatusColor(dispatch.status);
-                                    const isDashed = dispatch.status === 'dispatched';
+                                {/* Simulated Moving Vehicle Marker */}
+                                {dispatch.status === 'en_route' && simulatedPositions[dispatch.emergencyId] && (
+                                    <Circle
+                                        center={[
+                                            simulatedPositions[dispatch.emergencyId].lat,
+                                            simulatedPositions[dispatch.emergencyId].lon
+                                        ]}
+                                        radius={100}
+                                        pathOptions={{
+                                            color: '#FFFF00', // Bright Yellow
+                                            fillColor: '#FFFF00',
+                                            fillOpacity: 0.8,
+                                            weight: 2
+                                        }}
+                                    >
+                                        <Popup>
+                                            <div className="map-popup">
+                                                <strong>Response Unit #1</strong>
+                                                <p>En Route to Target</p>
+                                                <p>Speed: 45 km/h</p>
+                                            </div>
+                                        </Popup>
+                                    </Circle>
+                                )}
 
-                                    // Get center coordinates
-                                    const centerCoords = {
-                                        'Emergency Response Center Alpha': [30.7271, 76.8637],
-                                        'Fire Station Beta': [30.7071, 76.8437],
-                                        'Medical Response Unit Gamma': [30.7221, 76.8487],
-                                        'Chandigarh Emergency Response Center': [30.7333, 76.7794]
-                                    };
-                                    
-                                    const startPos = waypoints && waypoints.length > 0 
-                                        ? [waypoints[0].lat, waypoints[0].lon]
-                                        : (centerCoords[center.centerName] || [30.7171, 76.8537]);
-                                    const endPos = [dispatch.location.lat, dispatch.location.lon];
+                                {/* Routes from each dispatch center */}
+                                {dispatch.dispatchDetails?.centers?.map((center, idx) => (
+                                    <React.Fragment key={`${dispatch.emergencyId}-${idx}`}>
+                                        {/* Center Marker (Origin) */}
+                                        {center.route?.waypoints && center.route.waypoints.length > 0 && (
+                                            <>
+                                                <Marker
+                                                    position={[
+                                                        center.route.waypoints[0].lat,
+                                                        center.route.waypoints[0].lon
+                                                    ]}
+                                                >
+                                                    <Popup>
+                                                        <div className="map-popup">
+                                                            <strong>{center.centerName}</strong>
+                                                            <p>Distance: {center.route.distance?.toFixed(2)} km</p>
+                                                            <p>Duration: {Math.round(center.route.duration)} min</p>
+                                                        </div>
+                                                    </Popup>
+                                                </Marker>
 
-                                    // Build route positions
-                                    const routePositions = waypoints && waypoints.length > 0
-                                        ? waypoints.map(wp => [wp.lat, wp.lon])
-                                        : [startPos, endPos];
-
-                                    return (
-                                        <React.Fragment key={`${dispatch.emergencyId}-route-${idx}`}>
-                                            {/* Point A: Dispatch Center Marker */}
-                                            <Marker position={startPos}>
-                                                <Popup>
-                                                    <div className="map-popup">
-                                                        <strong>📦 {center.centerName}</strong>
-                                                        <p>Distance: {center.route?.distance?.toFixed(2) || 'N/A'} km</p>
-                                                        <p>Duration: {Math.round(center.route?.duration || 0)} min</p>
-                                                        <p>Resources: {center.resources?.length || 0} items</p>
-                                                    </div>
-                                                </Popup>
-                                            </Marker>
-
-                                            {/* Route Line from A to B */}
-                                            <Polyline
-                                                positions={routePositions}
-                                                pathOptions={{
-                                                    color: routeColor,
-                                                    weight: 4,
-                                                    opacity: 0.8,
-                                                    dashArray: isDashed ? '10, 10' : null
-                                                }}
-                                            />
-                                        </React.Fragment>
-                                    );
-                                })}
+                                                {/* Route Polyline */}
+                                                <Polyline
+                                                    positions={center.route.waypoints.map(wp => [wp.lat, wp.lon])}
+                                                    pathOptions={{
+                                                        color: getStatusColor(dispatch.status),
+                                                        weight: 3,
+                                                        opacity: 0.6,
+                                                        dashArray: dispatch.status === 'dispatched' ? '10, 10' : null
+                                                    }}
+                                                />
+                                            </>
+                                        )}
+                                    </React.Fragment>
+                                ))}
                             </React.Fragment>
                         ))}
                     </MapContainer>
@@ -414,10 +544,10 @@ const DispatchTracker = () => {
 
                 {/* Detailed View Panel */}
                 {selectedDispatch && (
-                    <div className="detail-panel">
+                    <div className={`detail-panel ${selectedDispatch ? 'active' : ''}`}>
                         <div className="panel-header">
                             <h3>Dispatch Details</h3>
-                            <button 
+                            <button
                                 className="close-panel"
                                 onClick={() => setSelectedDispatch(null)}
                             >

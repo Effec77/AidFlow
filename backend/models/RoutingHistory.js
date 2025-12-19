@@ -76,8 +76,8 @@ const routingHistorySchema = new mongoose.Schema({
         oldRoute: mongoose.Schema.Types.Mixed,
         newRoute: mongoose.Schema.Types.Mixed
     }],
-    userId: String,
-    emergencyId: String,
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Changed to ObjectId
+    emergencyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Emergency' }, // Changed to ObjectId
     expiresAt: Date,
     metadata: mongoose.Schema.Types.Mixed
 }, {

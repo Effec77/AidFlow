@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Send, Package, MapPin, Clock, CheckCircle, AlertTriangle, Navigation } from 'lucide-react';
+import React, { useState, useContext } from 'react';
+import { Send, Package, MapPin, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 import '../css/DispatchControl.css';
 
 /**
@@ -9,7 +9,7 @@ import '../css/DispatchControl.css';
  * One-click automated dispatch system
  */
 const DispatchControl = ({ emergency, onDispatchComplete }) => {
-    const navigate = useNavigate();
+    const { token } = useContext(UserContext);
     const [dispatching, setDispatching] = useState(false);
     const [dispatchResult, setDispatchResult] = useState(null);
     const [error, setError] = useState(null);
@@ -21,8 +21,9 @@ const DispatchControl = ({ emergency, onDispatchComplete }) => {
         try {
             console.log('🚀 Initiating dispatch for:', emergency.emergencyId);
 
-            const response = await axios.post(
-                `http://localhost:5000/api/emergency/dispatch/${emergency.emergencyId}`,
+            const api = createAuthenticatedAxios(token);
+            const response = await api.post(
+                `/api/emergency/dispatch/${emergency.emergencyId}`,
                 {
                     adminId: 'admin_001' // In production, get from auth context
                 }
