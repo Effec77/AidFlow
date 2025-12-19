@@ -1,9 +1,11 @@
 // ---------------------- RecipientPage.jsx ----------------------
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { PlusCircle, Loader, XCircle, CheckCircle2 } from 'lucide-react';
 import '../css/InventoryPage.css';
 import RoleToggle from "../components/RoleToggle";
 import { useNavigate } from "react-router-dom";
+import { UserContext } from "./UserContext";
+import { authenticatedFetch } from "../utils/api";
 
 const REQUEST_API = 'http://localhost:5000/api/requests';
 const INVENTORY_API = 'http://localhost:5000/api/inventory/items';
@@ -23,6 +25,7 @@ const RecipientPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
+  const { token } = useContext(UserContext);
 
   const navigate = useNavigate();
 
@@ -38,8 +41,8 @@ const RecipientPage = () => {
     setError(null);
     try {
       const [invRes, reqRes] = await Promise.all([
-        fetch(INVENTORY_API),
-        fetch(REQUEST_API),
+        authenticatedFetch(INVENTORY_API, {}, token),
+        authenticatedFetch(REQUEST_API, {}, token),
       ]);
 
       const invData = await invRes.json();
@@ -56,7 +59,7 @@ const RecipientPage = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (message || error) {
@@ -85,11 +88,10 @@ const RecipientPage = () => {
     setMessage('');
 
     try {
-      const response = await fetch(REQUEST_API, {
+      const response = await authenticatedFetch(REQUEST_API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
-      });
+      }, token);
 
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to submit request');

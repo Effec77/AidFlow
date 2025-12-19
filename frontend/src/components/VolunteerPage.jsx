@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { PackagePlus, Loader, XCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RoleToggle from "../components/RoleToggle";
+import { UserContext } from "./UserContext";
+import { authenticatedFetch } from "../utils/api";
 import "../css/InventoryPage.css";
 
 const DONATION_API = "http://localhost:5000/api/donations";
@@ -22,6 +24,7 @@ const VolunteerPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState(null);
+  const { token } = useContext(UserContext);
 
   const navigate = useNavigate();
 
@@ -35,8 +38,8 @@ const VolunteerPage = () => {
     setError(null);
     try {
       const [invRes, donRes] = await Promise.all([
-        fetch(INVENTORY_API),
-        fetch(DONATION_API),
+        authenticatedFetch(INVENTORY_API, {}, token),
+        authenticatedFetch(DONATION_API, {}, token),
       ]);
       setInventory(await invRes.json());
       setDonations(await donRes.json());
@@ -49,7 +52,7 @@ const VolunteerPage = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -63,11 +66,10 @@ const VolunteerPage = () => {
     setError(null);
 
     try {
-      const res = await fetch(DONATION_API, {
+      const res = await authenticatedFetch(DONATION_API, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
-      });
+      }, token);
 
       if (!res.ok) throw new Error("Failed to donate");
       setMessage(`Donation for "${formData.itemName}" added!`);

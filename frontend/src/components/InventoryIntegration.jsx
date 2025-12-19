@@ -1,28 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useContext } from 'react';
 import { Package, TrendingDown, TrendingUp, AlertTriangle } from 'lucide-react';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 
 /**
  * Inventory Integration Component
  * Displays real-time inventory from backend
  */
 const InventoryIntegration = () => {
+    const { token } = useContext(UserContext);
     const [inventory, setInventory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        fetchInventory();
-        
-        // Refresh every 30 seconds
-        const interval = setInterval(fetchInventory, 30000);
-        return () => clearInterval(interval);
-    }, []);
+        if (token) {
+            fetchInventory();
+            
+            // Refresh every 30 seconds
+            const interval = setInterval(fetchInventory, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [token]);
 
     const fetchInventory = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/inventory/items');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/inventory/items');
             setInventory(response.data);
             setLoading(false);
         } catch (error) {

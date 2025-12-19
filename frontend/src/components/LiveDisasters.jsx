@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
-import axios from 'axios';
 import { 
     AlertTriangle, 
     MapPin, 
@@ -15,6 +14,8 @@ import {
     Navigation
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 import 'leaflet/dist/leaflet.css';
 import '../css/LiveDisasters.css';
 
@@ -24,6 +25,7 @@ import '../css/LiveDisasters.css';
  */
 const LiveDisasters = () => {
     const navigate = useNavigate();
+    const { token } = useContext(UserContext);
     const [disasters, setDisasters] = useState([]);
     const [selectedDisaster, setSelectedDisaster] = useState(null);
     const [analytics, setAnalytics] = useState(null);
@@ -44,23 +46,26 @@ const LiveDisasters = () => {
     });
 
     useEffect(() => {
-        fetchDisasters();
-        fetchAnalytics();
-        fetchInventoryImpact();
-        
-        // Refresh every 30 seconds
-        const interval = setInterval(() => {
+        if (token) {
             fetchDisasters();
             fetchAnalytics();
             fetchInventoryImpact();
-        }, 30000);
+            
+            // Refresh every 30 seconds
+            const interval = setInterval(() => {
+                fetchDisasters();
+                fetchAnalytics();
+                fetchInventoryImpact();
+            }, 30000);
 
-        return () => clearInterval(interval);
-    }, []);
+            return () => clearInterval(interval);
+        }
+    }, [token]);
 
     const fetchDisasters = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/disasters/zones');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/disasters/zones');
             setDisasters(response.data.zones || []);
             setLoading(false);
         } catch (error) {
@@ -71,7 +76,8 @@ const LiveDisasters = () => {
 
     const fetchAnalytics = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/disasters/analytics');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/disasters/analytics');
             setAnalytics(response.data.analytics);
         } catch (error) {
             console.error('Failed to fetch analytics:', error);
@@ -80,7 +86,8 @@ const LiveDisasters = () => {
 
     const fetchInventoryImpact = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/inventory/items');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/inventory/items');
             setInventoryImpact(response.data || []);
         } catch (error) {
             console.error('Failed to fetch inventory:', error);
@@ -89,7 +96,8 @@ const LiveDisasters = () => {
 
     const createDisaster = async () => {
         try {
-            await axios.post('http://localhost:5000/api/disasters/zones', {
+            const api = createAuthenticatedAxios(token);
+            await api.post('/api/disasters/zones', {
                 ...newDisaster,
                 createdBy: 'admin'
             });
@@ -121,7 +129,8 @@ const LiveDisasters = () => {
             const address = getDisasterProp(disaster, 'address');
             
             // Create emergency request from disaster zone
-            const response = await axios.post('http://localhost:5000/api/emergency/request', {
+            const api = createAuthenticatedAxios(token);
+            const response = await api.post('/api/emergency/request', {
                 lat,
                 lon,
                 message: `Emergency in ${disaster.name} disaster zone. ${type} disaster with ${disaster.severity} severity. ${description}`,
@@ -143,7 +152,8 @@ const LiveDisasters = () => {
         if (!window.confirm('Mark this disaster zone as resolved?')) return;
         
         try {
-            await axios.delete(`http://localhost:5000/api/disasters/zones/${zoneId}`, {
+            const api = createAuthenticatedAxios(token);
+            await api.delete(`/api/disasters/zones/${zoneId}`, {
                 data: {
                     resolvedBy: 'admin',
                     resolutionNotes: 'Disaster situation resolved'

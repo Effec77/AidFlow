@@ -20,6 +20,7 @@ import emergencyRoutes from './routes/emergency.js';
 import agentsRoutes from './routes/agents.js';
 import inventoryRoutes from './routes/inventory.js';
 import disastersRoutes from './routes/disasters.js';
+import { protect, authorize } from './middleware/auth.js'; // Import auth middleware
 // -----------------------------
 
 dotenv.config();
@@ -48,17 +49,35 @@ const PRESENCE_KEYS = [
 // **********************************************
 async function seedUsersData() {
   try {
-    const userCount = await User.countDocuments();
-    if (userCount < 2) {
-      console.log("👤 Seeding initial Admin and Volunteer users...");
-      for (const userData of SEED_USERS) {
-        const userExists = await User.findOne({ username: userData.username });
-        if (!userExists) {
-          await User.create(userData);
-          console.log(`\t-> Created user: ${userData.username} (${userData.role})`);
-        }
+    console.log("👤 Seeding users (Admin, Branch Manager, Volunteer, Affected Citizen)...");
+    let createdCount = 0;
+    let updatedCount = 0;
+    
+    for (const userData of SEED_USERS) {
+      const userExists = await User.findOne({ username: userData.username });
+      if (!userExists) {
+        await User.create(userData);
+        console.log(`\t✅ Created user: ${userData.username} (${userData.role})`);
+        createdCount++;
+      } else {
+        // Update existing user to ensure role and other fields are correct
+        await User.findOneAndUpdate(
+          { username: userData.username },
+          { 
+            ...userData,
+            password: userData.password // Will be hashed by pre-save middleware
+          },
+          { new: true }
+        );
+        console.log(`\t🔄 Updated user: ${userData.username} (${userData.role})`);
+        updatedCount++;
       }
-      console.log("✅ User seeding complete.");
+    }
+    
+    if (createdCount > 0 || updatedCount > 0) {
+      console.log(`✅ User seeding complete. Created: ${createdCount}, Updated: ${updatedCount}`);
+    } else {
+      console.log("ℹ️  All seed users already exist.");
     }
   } catch (err) {
     console.error("❌ Error seeding user data:", err.message);
@@ -72,13 +91,54 @@ async function seedUsersData() {
 // Register
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, password, firstName, lastName, country, state, city, address, companyType, occupation, volunteerSkills } = req.body;
-    const userExists = await User.findOne({ username });
+    const { 
+      username, 
+      password, 
+      firstName, 
+      lastName, 
+      country, 
+      state, 
+      city, 
+      address, 
+      companyType, 
+      occupation, 
+      volunteerSkills,
+      role // Role from request body
+    } = req.body;
 
+    // Validate required fields
+    if (!username || !password || !firstName || !lastName || !country || !state || !city || !address) {
+      return res.status(400).json({ message: "Missing required fields." });
+    }
+
+    // Check if user already exists
+    const userExists = await User.findOne({ username });
     if (userExists) {
       return res.status(400).json({ message: "User already exists with this username." });
     }
 
+    // RBAC: Only allow public registration for 'volunteer' and 'affected citizen'
+    // Admin and Branch Manager roles must be created by administrators
+    const allowedPublicRoles = ['volunteer', 'affected citizen'];
+    let userRole = role ? role.toLowerCase().trim() : 'volunteer'; // Default to volunteer
+    
+    // Validate role against allowed public roles
+    if (!allowedPublicRoles.includes(userRole)) {
+      console.warn(`⚠️ Attempted registration with restricted role: ${userRole}`);
+      return res.status(403).json({ 
+        message: `Role '${userRole}' cannot be registered publicly. Only 'volunteer' and 'affected citizen' roles are available for public registration.` 
+      });
+    }
+
+    // Validate role against User model enum (extra safety check)
+    const validRoles = ['admin', 'branch manager', 'volunteer', 'affected citizen'];
+    if (!validRoles.includes(userRole)) {
+      return res.status(400).json({ 
+        message: `Invalid role '${userRole}'. Valid roles are: ${validRoles.join(', ')}` 
+      });
+    }
+
+    // Create user with validated role
     const user = await User.create({
       username,
       password,
@@ -88,12 +148,14 @@ app.post("/api/register", async (req, res) => {
       state,
       city,
       address,
-      companyType,
+      companyType: companyType || 'Individual',
       occupation,
       volunteerSkills: volunteerSkills || [],
+      role: userRole, // Explicitly set validated role
     });
 
     if (user) {
+      console.log(`✅ New user registered: ${user.username} (${user.role})`);
       res.status(201).json({
         _id: user._id,
         username: user.username,
@@ -106,9 +168,21 @@ app.post("/api/register", async (req, res) => {
     }
 
   } catch (err) {
-    const errors = Object.values(err.errors || {}).map(e => e.message).join('; ');
+    // Handle Mongoose validation errors
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors || {}).map(e => e.message).join('; ');
+      console.error("❌ Registration Validation Error:", errors);
+      return res.status(400).json({ message: errors || "Validation error during registration." });
+    }
+    
+    // Handle duplicate key errors
+    if (err.code === 11000) {
+      console.error("❌ Registration Error: Duplicate username");
+      return res.status(400).json({ message: "Username already exists." });
+    }
+
     console.error("❌ Registration Error:", err.message);
-    res.status(500).json({ message: errors || "Server error during registration." });
+    res.status(500).json({ message: "Server error during registration." });
   }
 });
 
@@ -185,7 +259,7 @@ async function seedInventoryData() {
 }
 
 // GET /api/inventory/items
-app.get("/api/inventory/items", async (req, res) => {
+app.get("/api/inventory/items", protect, async (req, res) => {
   try {
     const items = await InventoryItem.find({});
     const formattedItems = items.map(item => ({
@@ -200,7 +274,7 @@ app.get("/api/inventory/items", async (req, res) => {
   }
 });
 // Volunteer donates an item
-app.post("/api/volunteer/donate", async (req, res) => {
+app.post("/api/volunteer/donate", protect, authorize('volunteer', 'admin'), async (req, res) => {
     try {
       const { volunteerId, itemName, category, quantity, location } = req.body;
       const donation = await Donation.create({ volunteerId, itemName, category, quantity, location });
@@ -212,7 +286,7 @@ app.post("/api/volunteer/donate", async (req, res) => {
   });
   
   // Fetch all donations for this volunteer
-  app.get("/api/volunteer/donations/:volunteerId", async (req, res) => {
+  app.get("/api/volunteer/donations/:volunteerId", protect, authorize('volunteer', 'admin'), async (req, res) => {
     try {
       const { volunteerId } = req.params;
       const donations = await Donation.find({ volunteerId }).sort({ createdAt: -1 });
@@ -223,7 +297,7 @@ app.post("/api/volunteer/donate", async (req, res) => {
     }
   });
   // Request items
-app.post("/api/requester/request", async (req, res) => {
+app.post("/api/requester/request", protect, authorize('affected citizen', 'admin'), async (req, res) => {
     try {
       const { requesterId, itemName, category, quantity, location, priority } = req.body;
       const request = await Request.create({ requesterId, itemName, category, quantity, location, priority });
@@ -235,7 +309,7 @@ app.post("/api/requester/request", async (req, res) => {
   });
   
   // Fetch all requests for this user
-  app.get("/api/requester/requests/:requesterId", async (req, res) => {
+  app.get("/api/requester/requests/:requesterId", protect, authorize('affected citizen', 'admin'), async (req, res) => {
     try {
       const { requesterId } = req.params;
       const requests = await Request.find({ requesterId }).sort({ createdAt: -1 });
@@ -246,7 +320,7 @@ app.post("/api/requester/request", async (req, res) => {
     }
   });
 // Approve or reject a donation
-app.put("/api/admin/donation/:id", async (req, res) => {
+app.put("/api/admin/donation/:id", protect, authorize('admin', 'branch manager'), async (req, res) => {
     try {
       const { status, approvedBy } = req.body;
       const donation = await Donation.findByIdAndUpdate(
@@ -272,7 +346,7 @@ app.put("/api/admin/donation/:id", async (req, res) => {
   });
   
   // Approve or reject a request
-  app.put("/api/admin/request/:id", async (req, res) => {
+  app.put("/api/admin/request/:id", protect, authorize('admin', 'branch manager'), async (req, res) => {
     try {
       const { status } = req.body;
       const request = await Request.findByIdAndUpdate(req.params.id, { status }, { new: true });
@@ -297,12 +371,12 @@ app.put("/api/admin/donation/:id", async (req, res) => {
 // **********************************************
 // ********* EMERGENCY AI AGENT ROUTES **********
 // **********************************************
-app.use('/api/emergency', emergencyRoutes);
+app.use('/api/emergency', protect, emergencyRoutes);
 
 // **********************************************
 // ********* AI AGENTS CRUD ROUTES **************
 // **********************************************
-app.use('/api/agents', agentsRoutes);
+app.use('/api/agents', protect, agentsRoutes);
 
 // **********************************************
 // ********* INVENTORY & DONATIONS ROUTES *******
@@ -318,6 +392,7 @@ app.use('/api/disasters', disastersRoutes);
 // **********************************************
 // ********* DISASTER PREDICTIONS API ***********
 // **********************************************
+// Public endpoint - accessible to everyone (no authentication required)
 app.get("/api/disaster-predictions", async (req, res) => {
   console.log("📈 /api/disaster-predictions endpoint hit");
   try {
@@ -384,6 +459,21 @@ if (process.env.NODE_ENV === "production") {
     res.send("API is running...");
   });
 }
+
+// **********************************************
+// ********* ADMIN UTILITY ROUTES ***************
+// **********************************************
+
+// Seed users endpoint (for development/testing)
+app.post("/api/admin/seed-users", async (req, res) => {
+  try {
+    await seedUsersData();
+    res.json({ message: "Users seeded successfully" });
+  } catch (err) {
+    console.error("❌ Seeding Error:", err.message);
+    res.status(500).json({ error: "Failed to seed users" });
+  }
+});
 
 // **********************************************
 // ************ CONNECT & START *****************

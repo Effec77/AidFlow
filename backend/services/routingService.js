@@ -17,10 +17,60 @@ class RoutingService {
     }
 
     /**
+     * Geocode a place name to coordinates using OpenStreetMap Nominatim.
+     */
+    async geocodePlace(placeName) {
+        console.log(`🌍 Geocoding place: ${placeName}`);
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(placeName)}&format=json&limit=1`;
+        try {
+            const response = await fetch(url, { timeout: 5000 });
+            if (!response.ok) {
+                throw new Error(`Nominatim API returned ${response.status}`);
+            }
+            const data = await response.json();
+            if (data && data.length > 0) {
+                const { lat, lon, display_name } = data[0];
+                console.log(`✅ Geocoded '${placeName}' to lat: ${lat}, lon: ${lon} (${display_name})`);
+                return { lat: parseFloat(lat), lon: parseFloat(lon), name: display_name };
+            } else {
+                console.warn(`⚠️ No coordinates found for place: ${placeName}`);
+                return null;
+            }
+        } catch (error) {
+            console.error(`❌ Geocoding error for '${placeName}':`, error.message);
+            return null;
+        }
+    }
+
+    /**
      * Main routing function - calculates optimal route
      */
     async calculateRoute(origin, destination, options = {}) {
         console.log('🗺️ Calculating route from', origin, 'to', destination);
+
+        // Geocode origin if it's a place name
+        let processedOrigin = origin;
+        if (typeof origin === 'string') {
+            const geocodedOrigin = await this.geocodePlace(origin);
+            if (!geocodedOrigin) {
+                throw new Error(`Could not geocode origin: ${origin}`);
+            }
+            processedOrigin = geocodedOrigin;
+        } else if (!origin || (typeof origin.lat === 'undefined' || typeof origin.lon === 'undefined')) {
+            throw new Error('Invalid origin provided. Must be a place name or an object with lat/lon.');
+        }
+
+        // Geocode destination if it's a place name
+        let processedDestination = destination;
+        if (typeof destination === 'string') {
+            const geocodedDestination = await this.geocodePlace(destination);
+            if (!geocodedDestination) {
+                throw new Error(`Could not geocode destination: ${destination}`);
+            }
+            processedDestination = geocodedDestination;
+        } else if (!destination || (typeof destination.lat === 'undefined' || typeof destination.lon === 'undefined')) {
+            throw new Error('Invalid destination provided. Must be a place name or an object with lat/lon.');
+        }
         
         const routeId = `ROUTE_${Date.now()}`;
         const startTime = Date.now();
@@ -30,7 +80,7 @@ class RoutingService {
             const disasterZones = await this.getActiveDisasterZones().catch(() => []);
             
             // Step 2: Calculate base route using OSRM
-            const baseRoute = await this.getOSRMRoute(origin, destination);
+            const baseRoute = await this.getOSRMRoute(processedOrigin, processedDestination);
             
             if (!baseRoute || baseRoute.fallback) {
                 console.warn('⚠️ Using fallback route calculation');

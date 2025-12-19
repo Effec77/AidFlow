@@ -1,0 +1,13 @@
+/* App.css */
+.page-content-wrapper {
+  margin-top: 5rem; /* Space for the fixed header */
+  min-height: calc(100vh - 5rem); /* Ensure content takes full height below header */
+  background: linear-gradient(135deg, #141E30, #243B55, #2B3A4C, #1A212E);
+  background-size: 300% 300%;
+  animation: gradientMove 12s ease-in-out infinite;
+}
+
+body.light .page-content-wrapper {
+  background: linear-gradient(135deg, #EBF4FF 0%, #F0F4F8 50%, #E6FFFA 100%);
+  animation: none;
+}

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle } from 'react-leaflet';
-import axios from 'axios';
 import { Truck, MapPin, Clock, Package, Navigation, Activity, AlertCircle } from 'lucide-react';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 import 'leaflet/dist/leaflet.css';
 import '../css/DispatchTracker.css';
 
@@ -10,23 +11,27 @@ import '../css/DispatchTracker.css';
  * Shows all active dispatches on a map with live updates
  */
 const DispatchTracker = () => {
+    const { token } = useContext(UserContext);
     const [activeDispatches, setActiveDispatches] = useState([]);
     const [selectedDispatch, setSelectedDispatch] = useState(null);
     const [loading, setLoading] = useState(true);
     const [mapCenter, setMapCenter] = useState([30.7171, 76.8537]); // Default: Chandigarh
 
     useEffect(() => {
-        fetchActiveDispatches();
-        
-        // Refresh every 10 seconds for real-time updates
-        const interval = setInterval(fetchActiveDispatches, 10000);
-        
-        return () => clearInterval(interval);
-    }, []);
+        if (token) {
+            fetchActiveDispatches();
+            
+            // Refresh every 10 seconds for real-time updates
+            const interval = setInterval(fetchActiveDispatches, 10000);
+            
+            return () => clearInterval(interval);
+        }
+    }, [token]);
 
     const fetchActiveDispatches = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/emergency/active-dispatches');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/emergency/active-dispatches');
             setActiveDispatches(response.data.dispatches || []);
             setLoading(false);
         } catch (error) {
@@ -148,7 +153,7 @@ const DispatchTracker = () => {
 
             <div className="tracker-content">
                 {/* Dispatch List Sidebar */}
-                <div className="dispatch-list">
+                <div className="dispatch-list" style={{ display: selectedDispatch ? 'none' : 'block' }}>
                     <h3>Active Dispatches</h3>
                     
                     {activeDispatches.length === 0 ? (
@@ -225,7 +230,8 @@ const DispatchTracker = () => {
                                             onClick={async (e) => {
                                                 e.stopPropagation();
                                                 try {
-                                                    await axios.put(`http://localhost:5000/api/emergency/update-status/${dispatch.emergencyId}`, {
+                                                    const api = createAuthenticatedAxios(token);
+                                                    await api.put(`/api/emergency/update-status/${dispatch.emergencyId}`, {
                                                         status: 'en_route',
                                                         notes: 'Resources en route to location',
                                                         updatedBy: 'admin'
@@ -245,7 +251,8 @@ const DispatchTracker = () => {
                                             onClick={async (e) => {
                                                 e.stopPropagation();
                                                 try {
-                                                    await axios.put(`http://localhost:5000/api/emergency/complete/${dispatch.emergencyId}`, {
+                                                    const api = createAuthenticatedAxios(token);
+                                                    await api.put(`/api/emergency/complete/${dispatch.emergencyId}`, {
                                                         deliveryNotes: 'Resources delivered successfully',
                                                         completedBy: 'admin'
                                                     });
@@ -265,7 +272,8 @@ const DispatchTracker = () => {
                                                 e.stopPropagation();
                                                 if (window.confirm('Delete this completed dispatch?')) {
                                                     try {
-                                                        await axios.delete(`http://localhost:5000/api/emergency/${dispatch.emergencyId}`);
+                                                        const api = createAuthenticatedAxios(token);
+                                                        await api.delete(`/api/emergency/${dispatch.emergencyId}`);
                                                         fetchActiveDispatches();
                                                     } catch (error) {
                                                         console.error('Failed to delete:', error);
@@ -380,7 +388,7 @@ const DispatchTracker = () => {
 
                 {/* Detailed View Panel */}
                 {selectedDispatch && (
-                    <div className="detail-panel">
+                    <div className={`detail-panel ${selectedDispatch ? 'active' : ''}`}>
                         <div className="panel-header">
                             <h3>Dispatch Details</h3>
                             <button 

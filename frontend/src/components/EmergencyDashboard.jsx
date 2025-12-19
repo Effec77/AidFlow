@@ -1,32 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { AlertTriangle, MapPin, Clock, Users, TrendingUp, Activity, Navigation } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { UserContext } from './UserContext';
+import { createAuthenticatedAxios } from '../utils/api';
 import DispatchControl from './DispatchControl';
 
 const EmergencyDashboard = () => {
     const navigate = useNavigate();
+    const { token } = useContext(UserContext);
     const [activeEmergencies, setActiveEmergencies] = useState([]);
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedEmergency, setSelectedEmergency] = useState(null);
 
     useEffect(() => {
-        fetchActiveEmergencies();
-        fetchAnalytics();
-        
-        // Refresh every 30 seconds
-        const interval = setInterval(() => {
+        if (token) {
             fetchActiveEmergencies();
             fetchAnalytics();
-        }, 30000);
+            
+            // Refresh every 30 seconds
+            const interval = setInterval(() => {
+                fetchActiveEmergencies();
+                fetchAnalytics();
+            }, 30000);
 
-        return () => clearInterval(interval);
-    }, []);
+            return () => clearInterval(interval);
+        }
+    }, [token]);
 
     const fetchActiveEmergencies = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/emergency/active');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/emergency/active');
             setActiveEmergencies(response.data.emergencies);
         } catch (error) {
             console.error('Failed to fetch active emergencies:', error);
@@ -35,7 +40,8 @@ const EmergencyDashboard = () => {
 
     const fetchAnalytics = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/emergency/analytics');
+            const api = createAuthenticatedAxios(token);
+            const response = await api.get('/api/emergency/analytics');
             setAnalytics(response.data);
             setLoading(false);
         } catch (error) {
@@ -48,7 +54,8 @@ const EmergencyDashboard = () => {
         const deliveryNotes = prompt('Enter delivery notes (optional):');
         
         try {
-            await axios.put(`http://localhost:5000/api/emergency/complete/${emergencyId}`, {
+            const api = createAuthenticatedAxios(token);
+            await api.put(`/api/emergency/complete/${emergencyId}`, {
                 deliveryNotes: deliveryNotes || 'Resources delivered successfully',
                 completedBy: 'admin'
             });
@@ -67,7 +74,8 @@ const EmergencyDashboard = () => {
         }
 
         try {
-            await axios.delete(`http://localhost:5000/api/emergency/${emergencyId}`);
+            const api = createAuthenticatedAxios(token);
+            await api.delete(`/api/emergency/${emergencyId}`);
             
             fetchActiveEmergencies();
             setSelectedEmergency(null);

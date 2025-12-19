@@ -54,7 +54,7 @@ const severityLogSchema = new mongoose.Schema({
     },
     resourcesAllocated: {
         triggered: { type: Boolean, default: false },
-        items: [String],
+        items: [{ type: mongoose.Schema.Types.ObjectId, ref: 'InventoryItem' }], // Changed to reference InventoryItem IDs
         quantities: { type: Map, of: Number }
     },
     status: {
@@ -62,7 +62,7 @@ const severityLogSchema = new mongoose.Schema({
         enum: ['pending', 'processed', 'resources_allocated', 'completed', 'archived'],
         default: 'pending'
     },
-    userId: String,
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Changed to ObjectId
     notes: String
 }, {
     timestamps: true

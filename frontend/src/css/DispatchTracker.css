@@ -87,7 +87,8 @@
     display: grid;
     grid-template-columns: 350px 1fr 350px;
     gap: 1.5rem;
-    height: calc(100vh - 250px);
+    min-height: calc(100vh - 200px); /* Adjusted for better responsiveness */
+    align-items: start; /* Align items to the start of the grid */
 }
 
 /* Dispatch List */
@@ -223,6 +224,7 @@
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid var(--border-color);
+    flex-grow: 1; /* Ensure map takes available space */
 }
 
 .map-legend {
@@ -417,32 +419,51 @@
 /* Responsive */
 @media (max-width: 1400px) {
     .tracker-content {
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 1fr 350px; /* Two columns: Map + Detail Panel */
+        /* Removed 300px 1fr, so it uses the whole width when detail-panel is fixed */
+    }
+
+    .dispatch-list {
+        display: none; /* Hide dispatch list on smaller screens when detail panel is open */
+    }
+
+    .map-view {
+        width: auto;
+        height: calc(100vh - 200px); /* Adjust height for visible header/footer */
     }
 
     .detail-panel {
-        position: fixed;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 350px;
-        z-index: 1001;
-        box-shadow: -4px 0 16px var(--shadow-color);
+        position: relative; /* Make it part of the grid flow on larger tablets */
+        top: auto;
+        bottom: auto;
+        left: auto;
+        width: auto; /* Let grid define width */
+        box-shadow: none;
     }
 }
 
 @media (max-width: 1024px) {
+    .dispatch-tracker {
+        padding: 1rem;
+    }
+
     .tracker-content {
-        grid-template-columns: 1fr;
-        height: auto;
+        grid-template-columns: 1fr; /* Single column */
+        min-height: auto; /* Let content define height */
+        flex-direction: column; /* Stack elements vertically */
     }
 
     .dispatch-list {
+        display: block; /* Show dispatch list on mobile */
         max-height: 400px;
+        width: 100%; /* Ensure full width */
+        margin-bottom: 1.5rem; /* Add space below list */
     }
 
     .map-view {
         height: 500px;
+        width: 100%; /* Ensure full width */
+        margin-bottom: 1.5rem; /* Add space below map */
     }
 
     .detail-panel {
@@ -454,6 +475,14 @@
         width: 100%;
         height: 60vh;
         border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 16px var(--shadow-color); /* Shadow on top */
+        transform: translateY(100%); /* Initially hidden */
+        transition: transform 0.3s ease-out; /* Smooth transition */
+    }
+
+    /* When selected, show panel */
+    .detail-panel.active {
+        transform: translateY(0%);
     }
 }
 

@@ -2,6 +2,7 @@ import express from 'express';
 import EmergencyAIAgent from '../services/aiAgent.js';
 import Emergency from '../models/Emergency.js';
 import { InventoryItem } from '../models/Inventory.js';
+import mongoose from 'mongoose'; // Import mongoose
 
 const router = express.Router();
 const aiAgent = new EmergencyAIAgent();
@@ -30,7 +31,7 @@ router.post('/request', async (req, res) => {
         // Save to database
         const emergency = new Emergency({
             emergencyId: aiResponse.emergencyId,
-            userId,
+            userId: new mongoose.Types.ObjectId(userId), // Convert userId to ObjectId
             location: { lat, lon, address },
             userMessage: message,
             aiAnalysis: aiResponse.analysis,
@@ -152,7 +153,7 @@ router.put('/update/:emergencyId', async (req, res) => {
             status: status || emergency.status,
             timestamp: new Date(),
             notes: notes || `Status updated to ${status}`,
-            updatedBy
+            updatedBy: updatedBy ? new mongoose.Types.ObjectId(updatedBy) : null // Convert updatedBy to ObjectId
         });
 
         await emergency.save();
@@ -360,7 +361,7 @@ router.post('/dispatch/:emergencyId', async (req, res) => {
         const dispatchService = new DispatchService();
 
         // Execute automated dispatch
-        const result = await dispatchService.dispatchEmergency(emergencyId, adminId);
+        const result = await dispatchService.dispatchEmergency(emergencyId, new mongoose.Types.ObjectId(adminId)); // Convert adminId to ObjectId
 
         res.json(result);
 

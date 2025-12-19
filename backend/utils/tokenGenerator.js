@@ -20,7 +20,7 @@ const generateToken = (id, role) => {
     return jwt.sign(
         { id, role }, // Payload: User ID and Role
         process.env.JWT_SECRET, // Secret key from .env
-        { expiresIn: '30d' } // Token expiry time
+        { expiresIn: process.env.JWT_EXPIRES_IN || '30d' } // Use configurable expiry or default
     );
 };
 

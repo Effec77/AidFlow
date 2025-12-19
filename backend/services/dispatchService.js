@@ -1,6 +1,7 @@
 import { InventoryItem, Location } from '../models/Inventory.js';
 import Emergency from '../models/Emergency.js';
 import RoutingService from './routingService.js';
+import mongoose from 'mongoose'; // Import mongoose for transactions
 
 /**
  * Integrated Dispatch Service
@@ -15,15 +16,18 @@ class DispatchService {
     /**
      * Main dispatch function - ONE CLICK AUTOMATION
      * @param {String} emergencyId - Emergency request ID
-     * @param {String} adminId - Admin who authorized dispatch
+     * @param {mongoose.Types.ObjectId} adminId - Admin who authorized dispatch
      */
     async dispatchEmergency(emergencyId, adminId) {
         console.log(`🚀 Starting automated dispatch for emergency: ${emergencyId}`);
         const startTime = Date.now();
 
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
         try {
             // Step 1: Get emergency details
-            const emergency = await Emergency.findOne({ emergencyId });
+            const emergency = await Emergency.findOne({ emergencyId }).session(session);
             if (!emergency) {
                 throw new Error('Emergency not found');
             }
@@ -67,24 +71,26 @@ class DispatchService {
             console.log(`🗺️ Calculated ${routes.length} optimal routes`);
 
             // Step 5: Update inventory (deduct dispatched items)
-            await this.updateInventoryAfterDispatch(allocation.centers);
+            await this.updateInventoryAfterDispatch(allocation.centers, session);
 
             // Step 6: Update emergency status
             emergency.status = 'dispatched';
             emergency.dispatchDetails = {
                 dispatchedAt: new Date(),
-                dispatchedBy: adminId,
+                dispatchedBy: adminId, // Now an ObjectId
                 centers: allocation.centers.map(c => ({
                     centerId: c.centerId,
                     centerName: c.centerName,
                     resources: c.allocatedResources,
-                    route: routes.find(r => r.centerId === c.centerId)
+                    route: routes.find(r => r.centerId === c.centerId) || null // Ensure route matches schema
                 })),
                 totalResources: allocation.totalAllocated,
-                estimatedArrival: routes[0]?.eta || new Date(Date.now() + 30 * 60000)
+                estimatedArrival: routes[0]?.route?.eta || new Date(Date.now() + 30 * 60000) // Access eta from route object
             };
 
-            await emergency.save();
+            await emergency.save({ session });
+
+            await session.commitTransaction();
 
             const processingTime = Date.now() - startTime;
             console.log(`✅ Dispatch completed in ${processingTime}ms`);
@@ -105,8 +111,11 @@ class DispatchService {
             };
 
         } catch (error) {
+            await session.abortTransaction();
             console.error('❌ Dispatch error:', error.message);
             throw error;
+        } finally {
+            session.endSession();
         }
     }
 
@@ -290,11 +299,11 @@ class DispatchService {
     /**
      * Update inventory after dispatch (deduct quantities)
      */
-    async updateInventoryAfterDispatch(centers) {
+    async updateInventoryAfterDispatch(centers, session) {
         for (const center of centers) {
             for (const resource of center.allocatedResources) {
                 try {
-                    const item = await InventoryItem.findById(resource.itemId);
+                    const item = await InventoryItem.findById(resource.itemId).session(session);
                     if (item) {
                         item.currentStock -= resource.quantity;
                         
@@ -309,11 +318,12 @@ class DispatchService {
                         }
 
                         item.lastUpdated = new Date();
-                        await item.save();
+                        await item.save({ session });
                         console.log(`📦 Updated inventory: ${item.name} - ${resource.quantity} dispatched (${item.currentStock} remaining)`);
                     }
                 } catch (error) {
                     console.error(`Failed to update inventory for ${resource.itemId}:`, error.message);
+                    throw error; // Re-throw to trigger transaction abort
                 }
             }
         }
@@ -373,7 +383,9 @@ class DispatchService {
      */
     async getDispatchStatus(emergencyId) {
         try {
-            const emergency = await Emergency.findOne({ emergencyId });
+            const emergency = await Emergency.findOne({ emergencyId })
+                .populate('dispatchDetails.dispatchedBy', 'firstName lastName')
+                .populate('assignedTeam', 'firstName lastName role');
             if (!emergency) {
                 throw new Error('Emergency not found');
             }

@@ -86,6 +86,20 @@ export const SEED_USERS = [
         volunteerSkills: ['Transport', 'Information Supply', 'Fundraising']
     },
     {
+        username: 'branchmanager@edu.in',
+        password: 'BranchManager123',
+        role: 'branch manager',
+        firstName: 'John',
+        lastName: 'Manager',
+        country: 'USA',
+        state: 'California',
+        city: 'Los Angeles',
+        address: '300 Business Ave',
+        companyType: 'Government Employee',
+        occupation: 'Branch Manager',
+        volunteerSkills: ['Transport', 'Information Supply']
+    },
+    {
         username: 'volunteer',
         password: 'VolunteerPass123',
         role: 'volunteer',
@@ -98,5 +112,19 @@ export const SEED_USERS = [
         companyType: 'Individual',
         occupation: 'Logistics Coordinator',
         volunteerSkills: ['Transport']
+    },
+    {
+        username: 'citizen@test.com',
+        password: 'CitizenPass123',
+        role: 'affected citizen',
+        firstName: 'Sarah',
+        lastName: 'Johnson',
+        country: 'USA',
+        state: 'New York',
+        city: 'New York',
+        address: '400 Main Street',
+        companyType: 'Individual',
+        occupation: 'Teacher',
+        volunteerSkills: []
     },
 ];
